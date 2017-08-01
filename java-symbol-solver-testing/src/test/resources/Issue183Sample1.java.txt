@@ -1,0 +1,13 @@
+import java.util.Optional;
+
+public class Base{
+	class Derived extends Base{
+	}
+
+	public void bar(Optional<Base> o) {
+	}
+
+	public void foo() {
+		bar(Optional.of(new Derived()));
+	}
+}
