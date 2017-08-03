@@ -17,6 +17,8 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeS
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Optional;
+
 import static org.junit.Assert.assertEquals;
 
 public class Issue183 extends AbstractResolutionTest {
