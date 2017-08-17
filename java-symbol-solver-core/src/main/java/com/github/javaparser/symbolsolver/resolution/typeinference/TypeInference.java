@@ -3,6 +3,12 @@ package com.github.javaparser.symbolsolver.resolution.typeinference;
 import java.util.List;
 
 /**
+ * A variety of compile-time analyses require reasoning about types that are not yet known. Principal among these are
+ * generic method applicability testing (§18.5.1) and generic method invocation type inference (§18.5.2). In general,
+ * we refer to the process of reasoning about unknown types as type inference.
+ *
+ * At a high level, type inference can be decomposed into three processes: Reduction, Incorporation, and Resolution.
+ *
  * See https://docs.oracle.com/javase/specs/jls/se8/html/jls-18.html
  */
 public class TypeInference extends TIType {
