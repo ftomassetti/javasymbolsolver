@@ -362,84 +362,87 @@ public class TypeInferenceAPI {
         throw new UnsupportedOperationException();
     }
 
-    public void moreSpecificMethodInference() {
-//When testing that one applicable method is more specific than another (§15.12.2.5), where the second method is generic, it is necessary to test whether some instantiation of the second method's type parameters can be inferred to make the first method more specific than the second.
-//
-//Let m1 be the first method and m2 be the second method. Where m2 has type parameters P1, ..., Pp, let α1, ..., αp be inference variables, and let θ be the substitution [P1:=α1, ..., Pp:=αp].
-//
-//Let e1, ..., ek be the argument expressions of the corresponding invocation. Then:
-//
-//If m1 and m2 are applicable by strict or loose invocation (§15.12.2.2, §15.12.2.3), then let S1, ..., Sk be the formal parameter types of m1, and let T1, ..., Tk be the result of θ applied to the formal parameter types of m2.
-//
-//If m1 and m2 are applicable by variable arity invocation (§15.12.2.4), then let S1, ..., Sk be the first k variable arity parameter types of m1, and let T1, ..., Tk be the result of θ applied to the first k variable arity parameter types of m2.
-//
-//        Note that no substitution is applied to S1, ..., Sk; even if m1 is generic, the type parameters of m1 are treated as type variables, not inference variables.
-//
-//The process to determine if m1 is more specific than m2 is as follows:
-//
-//First, an initial bound set, B, is constructed from the declared bounds of P1, ..., Pp, as specified in §18.1.3.
-//
-//        Second, for all i (1 ≤ i ≤ k), a set of constraint formulas or bounds is generated.
-//
-//        If Ti is a proper type, the result is true if Si is more specific than Ti for ei (§15.12.2.5), and false otherwise. (Note that Si is always a proper type.)
-//
-//Otherwise, if Ti is not a functional interface type, the constraint formula ‹Si <: Ti› is generated.
-//
-//Otherwise, Ti is a parameterization of a functional interface, I. It must be determined whether Si satisfies the following five conditions:
-//
-//Si is a functional interface type.
-//
-//Si is not a superinterface of I, nor a parameterization of a superinterface of I.
-//
-//        Si is not a subinterface of I, nor a parameterization of a subinterface of I.
-//
-//        If Si is an intersection type, at least one element of the intersection is not a superinterface of I, nor a parameterization of a superinterface of I.
-//
-//        If Si is an intersection type, no element of the intersection is a subinterface of I, nor a parameterization of a subinterface of I.
-//
-//        If all five conditions are true, then the following constraint formulas or bounds are generated (where U1 ... Uk and R1 are the parameter types and return type of the function type of the capture of Si, and V1 ... Vk and R2 are the parameter types and return type of the function type of Ti):
-//
-//If ei is an explicitly typed lambda expression:
-//
-//For all j (1 ≤ j ≤ k), ‹Uj = Vj›.
-//
-//If R2 is void, true.
-//
-//        Otherwise, if R1 and R2 are functional interface types, and neither interface is a subinterface of the other, and ei has at least one result expression, then these rules are applied recursively to R1 and R2, for each result expression in ei.
-//
-//        Otherwise, if R1 is a primitive type and R2 is not, and ei has at least one result expression, and each result expression of ei is a standalone expression (§15.2) of a primitive type, true.
-//
-//        Otherwise, if R2 is a primitive type and R1 is not, and ei has at least one result expression, and each result expression of ei is either a standalone expression of a reference type or a poly expression, true.
-//
-//        Otherwise, ‹R1 <: R2›.
-//
-//If ei is an exact method reference:
-//
-//For all j (1 ≤ j ≤ k), ‹Uj = Vj›.
-//
-//If R2 is void, true.
-//
-//        Otherwise, if R1 is a primitive type and R2 is not, and the compile-time declaration for ei has a primitive return type, true.
-//
-//        Otherwise if R2 is a primitive type and R1 is not, and the compile-time declaration for ei has a reference return type, true.
-//
-//        Otherwise, ‹R1 <: R2›.
-//
-//If ei is a parenthesized expression, these rules are applied recursively to the contained expression.
-//
-//If ei is a conditional expression, these rules are applied recursively to each of the second and third operands.
-//
-//Otherwise, false.
-//
-//        If the five constraints on Si are not satisfied, the constraint formula ‹Si <: Ti› is generated instead.
-//
-//        Third, if m2 is applicable by variable arity invocation and has k+1 parameters, then where Sk+1 is the k+1'th variable arity parameter type of m1 and Tk+1 is the result of θ applied to the k+1'th variable arity parameter type of m2, the constraint ‹Sk+1 <: Tk+1› is generated.
-//
-//Fourth, the generated bounds and constraint formulas are reduced and incorporated with B to produce a bound set B'.
-//
-//If B' does not contain the bound false, and resolution of all the inference variables in B' succeeds, then m1 is more specific than m2.
-//
-//Otherwise, m1 is not more specific than m2.
+    public void moreSpecificMethodInference(MethodCallExpr methodCallExpr, MethodDeclaration m1, MethodDeclaration m2) {
+        // When testing that one applicable method is more specific than another (§15.12.2.5), where the second method
+        // is generic, it is necessary to test whether some instantiation of the second method's type parameters can be
+        // inferred to make the first method more specific than the second.
+        //
+        // Let m1 be the first method and m2 be the second method. Where m2 has type parameters P1, ..., Pp,
+        // let α1, ..., αp be inference variables, and let θ be the substitution [P1:=α1, ..., Pp:=αp].
+        //
+        // Let e1, ..., ek be the argument expressions of the corresponding invocation. Then:
+        //
+        // - If m1 and m2 are applicable by strict or loose invocation (§15.12.2.2, §15.12.2.3), then let S1, ..., Sk be the formal parameter types of m1, and let T1, ..., Tk be the result of θ applied to the formal parameter types of m2.
+        //
+        // - If m1 and m2 are applicable by variable arity invocation (§15.12.2.4), then let S1, ..., Sk be the first k variable arity parameter types of m1, and let T1, ..., Tk be the result of θ applied to the first k variable arity parameter types of m2.
+        //
+        // Note that no substitution is applied to S1, ..., Sk; even if m1 is generic, the type parameters of m1 are treated as type variables, not inference variables.
+        //
+        // The process to determine if m1 is more specific than m2 is as follows:
+        //
+        // - First, an initial bound set, B, is constructed from the declared bounds of P1, ..., Pp, as specified in §18.1.3.
+        //
+        // - Second, for all i (1 ≤ i ≤ k), a set of constraint formulas or bounds is generated.
+        //
+        //   If Ti is a proper type, the result is true if Si is more specific than Ti for ei (§15.12.2.5), and false otherwise. (Note that Si is always a proper type.)
+        //
+        //   Otherwise, if Ti is not a functional interface type, the constraint formula ‹Si <: Ti› is generated.
+        //
+        //   Otherwise, Ti is a parameterization of a functional interface, I. It must be determined whether Si satisfies the following five conditions:
+        //
+        //   1. Si is a functional interface type.
+        //
+        //   2. Si is not a superinterface of I, nor a parameterization of a superinterface of I.
+        //
+        //   3. Si is not a subinterface of I, nor a parameterization of a subinterface of I.
+        //
+        //   4. If Si is an intersection type, at least one element of the intersection is not a superinterface of I, nor a parameterization of a superinterface of I.
+        //
+        //   5. If Si is an intersection type, no element of the intersection is a subinterface of I, nor a parameterization of a subinterface of I.
+        //
+        //   If all five conditions are true, then the following constraint formulas or bounds are generated (where U1 ... Uk and R1 are the parameter types and return type of the function type of the capture of Si, and V1 ... Vk and R2 are the parameter types and return type of the function type of Ti):
+        //
+        //   - If ei is an explicitly typed lambda expression:
+        //
+        //     - For all j (1 ≤ j ≤ k), ‹Uj = Vj›.
+        //
+        //     - If R2 is void, true.
+        //
+        //     - Otherwise, if R1 and R2 are functional interface types, and neither interface is a subinterface of the other, and ei has at least one result expression, then these rules are applied recursively to R1 and R2, for each result expression in ei.
+        //
+        //     - Otherwise, if R1 is a primitive type and R2 is not, and ei has at least one result expression, and each result expression of ei is a standalone expression (§15.2) of a primitive type, true.
+        //
+        //     - Otherwise, if R2 is a primitive type and R1 is not, and ei has at least one result expression, and each result expression of ei is either a standalone expression of a reference type or a poly expression, true.
+        //
+        //     - Otherwise, ‹R1 <: R2›.
+        //
+        //   - If ei is an exact method reference:
+        //
+        //     - For all j (1 ≤ j ≤ k), ‹Uj = Vj›.
+        //
+        //     - If R2 is void, true.
+        //
+        //     - Otherwise, if R1 is a primitive type and R2 is not, and the compile-time declaration for ei has a primitive return type, true.
+        //
+        //     - Otherwise if R2 is a primitive type and R1 is not, and the compile-time declaration for ei has a reference return type, true.
+        //
+        //     - Otherwise, ‹R1 <: R2›.
+        //
+        //   - If ei is a parenthesized expression, these rules are applied recursively to the contained expression.
+        //
+        //   - If ei is a conditional expression, these rules are applied recursively to each of the second and third operands.
+        //
+        //   - Otherwise, false.
+        //
+        //   If the five constraints on Si are not satisfied, the constraint formula ‹Si <: Ti› is generated instead.
+        //
+        // - Third, if m2 is applicable by variable arity invocation and has k+1 parameters, then where Sk+1 is the k+1'th variable arity parameter type of m1 and Tk+1 is the result of θ applied to the k+1'th variable arity parameter type of m2, the constraint ‹Sk+1 <: Tk+1› is generated.
+        //
+        // - Fourth, the generated bounds and constraint formulas are reduced and incorporated with B to produce a bound set B'.
+        //
+        //   If B' does not contain the bound false, and resolution of all the inference variables in B' succeeds, then m1 is more specific than m2.
+        //
+        //   Otherwise, m1 is not more specific than m2.
 
         throw new UnsupportedOperationException();
     }
