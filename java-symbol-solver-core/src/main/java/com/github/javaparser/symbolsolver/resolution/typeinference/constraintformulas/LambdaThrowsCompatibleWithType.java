@@ -4,10 +4,6 @@ import com.github.javaparser.ast.expr.LambdaExpr;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.resolution.typeinference.BoundSet;
 import com.github.javaparser.symbolsolver.resolution.typeinference.ConstraintFormula;
-import com.github.javaparser.symbolsolver.resolution.typeinference.TIType;
-import com.github.javaparser.utils.Pair;
-
-import java.util.List;
 
 /**
  * The checked exceptions thrown by the body of the LambdaExpression are declared by the throws clause of the

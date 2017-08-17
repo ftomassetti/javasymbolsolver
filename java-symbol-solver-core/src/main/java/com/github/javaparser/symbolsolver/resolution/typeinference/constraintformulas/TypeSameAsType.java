@@ -3,10 +3,6 @@ package com.github.javaparser.symbolsolver.resolution.typeinference.constraintfo
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.resolution.typeinference.BoundSet;
 import com.github.javaparser.symbolsolver.resolution.typeinference.ConstraintFormula;
-import com.github.javaparser.symbolsolver.resolution.typeinference.TIType;
-import com.github.javaparser.utils.Pair;
-
-import java.util.List;
 
 /**
  * A type S is the same as a type T (§4.3.4), or a type argument S is the same as type argument T

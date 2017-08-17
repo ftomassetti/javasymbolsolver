@@ -11,7 +11,7 @@ import java.util.List;
  *
  * See https://docs.oracle.com/javase/specs/jls/se8/html/jls-18.html
  */
-public class TypeInference extends TIType {
+public class TypeInference {
 
     /**
      * Takes a compatibility assertion about an expression or type, called a constraint formula, and reduces it to a

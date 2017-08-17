@@ -3,10 +3,6 @@ package com.github.javaparser.symbolsolver.resolution.typeinference.constraintfo
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.resolution.typeinference.BoundSet;
 import com.github.javaparser.symbolsolver.resolution.typeinference.ConstraintFormula;
-import com.github.javaparser.symbolsolver.resolution.typeinference.TIType;
-import com.github.javaparser.utils.Pair;
-
-import java.util.List;
 
 /**
  * A type S is compatible in a loose invocation context with type T

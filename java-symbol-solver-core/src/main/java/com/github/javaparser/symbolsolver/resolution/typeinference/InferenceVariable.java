@@ -20,6 +20,22 @@ public class InferenceVariable implements Type {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        InferenceVariable that = (InferenceVariable) o;
+
+        return name.equals(that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    @Override
+
     public boolean isAssignableBy(Type other) {
         throw new UnsupportedOperationException();
     }
