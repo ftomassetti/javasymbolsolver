@@ -16,6 +16,8 @@
 
 package com.github.javaparser.symbolsolver.model.declarations;
 
+import com.github.javaparser.symbolsolver.model.typesystem.Type;
+
 import java.util.Optional;
 
 /**
@@ -118,5 +120,13 @@ public interface MethodLikeDeclaration extends Declaration, TypeParametrizable, 
             }
         }
         return declaringType().findTypeParameter(name);
+    }
+
+    default int getNumberOfSpecifiedExceptions() {
+        throw new UnsupportedOperationException();
+    }
+
+    default Type getSpecifiedException(int index) {
+        throw new UnsupportedOperationException();
     }
 }
