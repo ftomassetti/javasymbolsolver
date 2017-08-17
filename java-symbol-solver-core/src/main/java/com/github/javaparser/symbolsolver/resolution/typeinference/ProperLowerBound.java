@@ -5,11 +5,11 @@ import com.github.javaparser.symbolsolver.model.typesystem.Type;
 /**
  * Created by federico on 17/08/2017.
  */
-public class Instantiation {
+public class ProperLowerBound {
     private InferenceVariable inferenceVariable;
     private Type properType;
 
-    public Instantiation(InferenceVariable inferenceVariable, Type properType) {
+    public ProperLowerBound(InferenceVariable inferenceVariable, Type properType) {
         this.inferenceVariable = inferenceVariable;
         this.properType = properType;
     }
@@ -19,7 +19,7 @@ public class Instantiation {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Instantiation that = (Instantiation) o;
+        ProperLowerBound that = (ProperLowerBound) o;
 
         if (!inferenceVariable.equals(that.inferenceVariable)) return false;
         return properType.equals(that.properType);
@@ -34,7 +34,7 @@ public class Instantiation {
 
     @Override
     public String toString() {
-        return "Instantiation{" +
+        return "ProperLowerBound{" +
                 "inferenceVariable=" + inferenceVariable +
                 ", properType=" + properType +
                 '}';

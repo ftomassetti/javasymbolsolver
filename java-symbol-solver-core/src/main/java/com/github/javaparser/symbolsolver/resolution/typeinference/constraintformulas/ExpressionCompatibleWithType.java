@@ -4,11 +4,6 @@ import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.resolution.typeinference.BoundSet;
 import com.github.javaparser.symbolsolver.resolution.typeinference.ConstraintFormula;
-import com.github.javaparser.symbolsolver.resolution.typeinference.TIType;
-import com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper;
-import com.github.javaparser.utils.Pair;
-
-import java.util.List;
 
 import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.isCompatibleInALooseInvocationContext;
 import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.isProperType;
