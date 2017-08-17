@@ -1,5 +1,9 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference;
 
+import com.github.javaparser.symbolsolver.resolution.typeinference.bounds.SubtypeOfBound;
+import com.github.javaparser.symbolsolver.resolution.typeinference.constraintformulas.ExpressionCompatibleWithType;
+
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -43,6 +47,53 @@ public abstract class ConstraintFormula {
 
         public static ReductionResult falseResult() {
             return empty().withBound(Bound.falseBound());
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ReductionResult that = (ReductionResult) o;
+
+            if (!boundSet.equals(that.boundSet)) return false;
+            return constraintFormulas.equals(that.constraintFormulas);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = boundSet.hashCode();
+            result = 31 * result + constraintFormulas.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "ReductionResult{" +
+                    "boundSet=" + boundSet +
+                    ", constraintFormulas=" + constraintFormulas +
+                    '}';
+        }
+
+        public ConstraintFormula getConstraint(int index) {
+            if (constraintFormulas.size() <= index) {
+                throw new IllegalArgumentException("Constaint with index " + index + " is not available as there are " + constraintFormulas.size() + " constraints");
+            }
+            return constraintFormulas.get(index);
+        }
+
+        public static ReductionResult oneConstraint(ConstraintFormula constraintFormula) {
+            return empty().withConstraint(constraintFormula);
+        }
+
+        public static ReductionResult withConstraints(ConstraintFormula... constraints) {
+            ReductionResult reductionResult = new ReductionResult();
+            reductionResult.constraintFormulas.addAll(Arrays.asList(constraints));
+            return reductionResult;
+        }
+
+        public static ReductionResult oneBound(Bound bound) {
+            return empty().withBound(bound);
         }
     }
 
