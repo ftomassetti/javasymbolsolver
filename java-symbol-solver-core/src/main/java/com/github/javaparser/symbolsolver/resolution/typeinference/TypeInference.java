@@ -52,7 +52,7 @@ public class TypeInference {
      * Examines the bounds on an inference variable and determines an instantiation that is compatible with those
      * bounds. It also decides the order in which interdependent inference variables are to be resolved.
      */
-    public Instantiation performResolution(BoundSet boundSet) {
+    public InstantiationSet performResolution(BoundSet boundSet) {
         // Given a bound set that does not contain the bound false, a subset of the inference variables mentioned by the bound set may be resolved. This means that a satisfactory instantiation may be added to the set for each inference variable, until all the requested variables have instantiations.
         //
         // Dependencies in the bound set may require that the variables be resolved in a particular order, or that additional variables be resolved. Dependencies are specified as follows:

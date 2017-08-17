@@ -1,5 +1,7 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference;
 
+import com.github.javaparser.symbolsolver.resolution.typeinference.bounds.FalseBound;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -49,5 +51,13 @@ public class BoundSet {
         boundSet.bounds.addAll(this.bounds);
         boundSet.bounds.add(bound);
         return boundSet;
+    }
+
+    public BoundSet incorporate(BoundSet otherBounds) {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean containsFalse() {
+        return bounds.stream().anyMatch(it -> it instanceof FalseBound);
     }
 }
