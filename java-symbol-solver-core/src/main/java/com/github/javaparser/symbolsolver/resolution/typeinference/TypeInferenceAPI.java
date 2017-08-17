@@ -1,5 +1,6 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference;
 
+import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.LambdaExpr;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.model.declarations.InterfaceDeclaration;
@@ -11,7 +12,9 @@ import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.resolution.typeinference.bounds.SubtypeOfBound;
 import com.github.javaparser.symbolsolver.resolution.typeinference.bounds.ThrowsBound;
 
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 public class TypeInferenceAPI {
     public TypeInferenceAPI(TypeSolver typeSolver) {
@@ -19,6 +22,7 @@ public class TypeInferenceAPI {
     }
 
     private TypeSolver typeSolver;
+    private TypeInference typeInference = new TypeInference();
     private final Type object = new ReferenceTypeImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver);
 
     private BoundSet boundSetup(List<TypeParameterDeclaration> typeParameterDeclarations, List<InferenceVariable> inferenceVariables) {
@@ -61,6 +65,14 @@ public class TypeInferenceAPI {
         throw new UnsupportedOperationException();
     }
 
+    private List<Type> formalParameterTypes(MethodDeclaration methodDeclaration) {
+        List<Type> types = new LinkedList<>();
+        for (int i=0;i<methodDeclaration.getNumberOfParams();i++) {
+            types.add(methodDeclaration.getParam(i).getType());
+        }
+        return types;
+    }
+
     /**
      * Determine whether a potentially applicable generic method m is applicable for a method invocation that
      * provides no explicit type arguments.
@@ -99,28 +111,72 @@ public class TypeInferenceAPI {
 
         // - A set of constraint formulas, C, is constructed as follows.
         //
-        //   Let F1, ..., Fn be the formal parameter types of m, and let e1, ..., ek be the actual argument expressions of the invocation. Then:
-        //
-        //   - To test for applicability by strict invocation:
-        //
-        //     If k ≠ n, or if there exists an i (1 ≤ i ≤ n) such that ei is pertinent to applicability (§15.12.2.2) and either i) ei is a standalone expression of a primitive type but Fi is a reference type, or ii) Fi is a primitive type but ei is not a standalone expression of a primitive type; then the method is not applicable and there is no need to proceed with inference.
-        //
-        //     Otherwise, C includes, for all i (1 ≤ i ≤ k) where ei is pertinent to applicability, ‹ei → Fi θ›.
-        //
-        // - To test for applicability by loose invocation:
-        //
-        //   If k ≠ n, the method is not applicable and there is no need to proceed with inference.
-        //
-        //   Otherwise, C includes, for all i (1 ≤ i ≤ k) where ei is pertinent to applicability, ‹ei → Fi θ›.
-        //
-        // - To test for applicability by variable arity invocation:
-        //
-        //   Let F'1, ..., F'k be the first k variable arity parameter types of m (§15.12.2.4). C includes, for all i (1 ≤ i ≤ k) where ei is pertinent to applicability, ‹ei → F'i θ›.
-        //
-        // - C is reduced (§18.2) and the resulting bounds are incorporated with B1 to produce a new bound set, B2.
-        //
-        // - Finally, the method m is applicable if B2 does not contain the bound false and resolution of all the inference variables in B2 succeeds (§18.4).
+        //   Let F1, ..., Fn be the formal parameter types of m, and let e1, ..., ek be the actual argument expressions
+        //   of the invocation. Then:
 
+        List<Type> Fs = formalParameterTypes(methodDeclaration);
+        List<Expression> es = methodCallExpr.getArguments();
+
+        Optional<ConstraintFormulaSet> C = Optional.empty();
+
+        //   - To test for applicability by strict invocation:
+
+
+        if (!C.isPresent()) {
+            C = testForApplicabilityByStrictInvocation();
+        }
+
+        //   - To test for applicability by loose invocation:
+
+        if (!C.isPresent()) {
+            C = testForApplicabilityByLooseInvocation();
+        }
+
+        //   - To test for applicability by variable arity invocation:
+
+        if (!C.isPresent()) {
+            C = testForApplicabilityByVariableArityInvocation();
+        }
+
+        if (!C.isPresent()) {
+            return false;
+        }
+
+        // - C is reduced (§18.2) and the resulting bounds are incorporated with B1 to produce a new bound set, B2.
+
+        BoundSet resultingBounds = C.get().reduce();
+        BoundSet B2 = B1.incorporate(resultingBounds);
+
+        // - Finally, the method m is applicable if B2 does not contain the bound false and resolution of all the
+        //   inference variables in B2 succeeds (§18.4).
+
+        if (B2.containsFalse()) {
+            return false;
+        }
+
+        InstantiationSet instantiation = typeInference.performResolution(B2);
+        return instantiation.allInferenceVariablesAreResolved(B2);
+    }
+
+    private Optional<ConstraintFormulaSet> testForApplicabilityByStrictInvocation() {
+        // If k ≠ n, or if there exists an i (1 ≤ i ≤ n) such that ei is pertinent to applicability (§15.12.2.2)
+        // and either i) ei is a standalone expression of a primitive type but Fi is a reference type,
+        // or ii) Fi is a primitive type but ei is not a standalone expression of a primitive type;
+        // then the method is not applicable and there is no need to proceed with inference.
+        //
+        // Otherwise, C includes, for all i (1 ≤ i ≤ k) where ei is pertinent to applicability, ‹ei → Fi θ›.
+
+        throw new UnsupportedOperationException();
+    }
+
+    private Optional<ConstraintFormulaSet> testForApplicabilityByLooseInvocation() {
+        // Let F'1, ..., F'k be the first k variable arity parameter types of m (§15.12.2.4). C includes,
+        // for all i (1 ≤ i ≤ k) where ei is pertinent to applicability, ‹ei → F'i θ›.
+
+        throw new UnsupportedOperationException();
+    }
+
+    private Optional<ConstraintFormulaSet> testForApplicabilityByVariableArityInvocation() {
         throw new UnsupportedOperationException();
     }
 
