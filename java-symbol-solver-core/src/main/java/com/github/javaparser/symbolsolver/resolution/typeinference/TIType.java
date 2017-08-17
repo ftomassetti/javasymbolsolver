@@ -8,6 +8,7 @@ import com.github.javaparser.symbolsolver.model.typesystem.Type;
  * variables are assertions about every proper type that can be produced by replacing each inference variable with
  * a proper type.
  */
+@Deprecated
 public abstract class TIType {
 
     class ProperType extends TIType {
