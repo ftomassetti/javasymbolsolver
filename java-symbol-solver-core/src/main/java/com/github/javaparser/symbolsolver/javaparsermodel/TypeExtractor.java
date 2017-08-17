@@ -230,7 +230,7 @@ public class TypeExtractor extends DefaultVisitorAdapter {
 
     @Override
     public Type visit(StringLiteralExpr node, Boolean solveLambdas) {
-        return new ReferenceTypeImpl(new ReflectionTypeSolver().solveType("java.lang.String"), typeSolver);
+        return new ReferenceTypeImpl(new ReflectionTypeSolver().solveType(String.class.getCanonicalName()), typeSolver);
     }
 
     @Override
