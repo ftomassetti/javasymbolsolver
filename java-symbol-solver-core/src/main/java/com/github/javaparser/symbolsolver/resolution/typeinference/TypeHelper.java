@@ -40,6 +40,10 @@ public class TypeHelper {
         throw new UnsupportedOperationException();
     }
 
+    public static boolean isCompatibleInALooseInvocationContext(Type s, Type t) {
+        throw new UnsupportedOperationException();
+    }
+
     public static boolean isInferenceVariable(Type type) {
         return type instanceof InferenceVariable;
     }

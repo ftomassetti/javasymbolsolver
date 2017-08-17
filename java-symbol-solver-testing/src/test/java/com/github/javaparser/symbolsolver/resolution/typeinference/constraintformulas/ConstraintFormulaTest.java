@@ -35,11 +35,16 @@ public class ConstraintFormulaTest {
         Expression e = new StringLiteralExpr("hi");
         InferenceVariable inferenceVariable = new InferenceVariable("α");
 
-        ExpressionCompatibleWithType formula = new ExpressionCompatibleWithType(e, inferenceVariable);
+        ExpressionCompatibleWithType formula = new ExpressionCompatibleWithType(typeSolver, e, inferenceVariable);
+
+        ConstraintFormula.ReductionResult res1 = formula.reduce(BoundSet.empty());
+        assertEquals(
+                ConstraintFormula.ReductionResult.empty().withConstraint(new TypeCompatibleWithType(stringType, inferenceVariable)),
+                res1);
 
         assertEquals(
                 ConstraintFormula.ReductionResult.empty().withConstraint(new TypeSubtypeOfType(stringType, inferenceVariable)),
-                formula.reduce(BoundSet.empty()));
+                res1.getConstraint(0).reduce(BoundSet.empty()));
     }
 
     /**

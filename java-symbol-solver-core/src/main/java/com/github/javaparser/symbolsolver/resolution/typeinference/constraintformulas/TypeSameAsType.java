@@ -11,6 +11,11 @@ public class TypeSameAsType extends ConstraintFormula {
     private Type S;
     private Type T;
 
+    public TypeSameAsType(Type s, Type t) {
+        S = s;
+        T = t;
+    }
+
     @Override
     public ReductionResult reduce(BoundSet currentBoundSet) {
         // A constraint formula of the form ‹S = T›, where S and T are types, is reduced as follows:
