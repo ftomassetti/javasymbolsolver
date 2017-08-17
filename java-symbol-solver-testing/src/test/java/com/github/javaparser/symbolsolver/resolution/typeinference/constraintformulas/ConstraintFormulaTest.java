@@ -47,26 +47,26 @@ public class ConstraintFormulaTest {
                 res1.getConstraint(0).reduce(BoundSet.empty()));
     }
 
-    /**
-     * From JLS 18.1.2
-     *
-     * From Arrays.asList(1, 2.0), we have the constraint formulas ‹1 → α› and ‹2.0 → α›. Through reduction,
-     * these will become the constraint formulas ‹int → α› and ‹double → α›, and then ‹Integer <: α› and ‹Double <: α›.
-     */
-    @Test
-    public void testExpressionCompatibleWithTypeReduce2() {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * From JLS 18.1.2
-     *
-     * From the target type of the constructor invocation List<Thread> lt = new ArrayList<>(), we have the constraint
-     * formula ‹ArrayList<α> → List<Thread>›. Through reduction, this will become the constraint formula ‹α <= Thread›,
-     * and then ‹α = Thread›.
-     */
-    @Test
-    public void testExpressionCompatibleWithTypeReduce3() {
-        throw new UnsupportedOperationException();
-    }
+//    /**
+//     * From JLS 18.1.2
+//     *
+//     * From Arrays.asList(1, 2.0), we have the constraint formulas ‹1 → α› and ‹2.0 → α›. Through reduction,
+//     * these will become the constraint formulas ‹int → α› and ‹double → α›, and then ‹Integer <: α› and ‹Double <: α›.
+//     */
+//    @Test
+//    public void testExpressionCompatibleWithTypeReduce2() {
+//        throw new UnsupportedOperationException();
+//    }
+//
+//    /**
+//     * From JLS 18.1.2
+//     *
+//     * From the target type of the constructor invocation List<Thread> lt = new ArrayList<>(), we have the constraint
+//     * formula ‹ArrayList<α> → List<Thread>›. Through reduction, this will become the constraint formula ‹α <= Thread›,
+//     * and then ‹α = Thread›.
+//     */
+//    @Test
+//    public void testExpressionCompatibleWithTypeReduce3() {
+//        throw new UnsupportedOperationException();
+//    }
 }
