@@ -1,8 +1,14 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference.constraintformulas;
 
+import com.github.javaparser.symbolsolver.model.typesystem.NullType;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.resolution.typeinference.BoundSet;
 import com.github.javaparser.symbolsolver.resolution.typeinference.ConstraintFormula;
+import com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper;
+import com.github.javaparser.symbolsolver.resolution.typeinference.bounds.SubtypeOfBound;
+
+import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.isInferenceVariable;
+import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.isProperType;
 
 /**
  * A reference type S is a subtype of a reference type T
@@ -21,15 +27,35 @@ public class TypeSubtypeOfType extends ConstraintFormula {
         // A constraint formula of the form ‹S <: T› is reduced as follows:
         //
         // - If S and T are proper types, the constraint reduces to true if S is a subtype of T (§4.10), and false otherwise.
-        //
+
+        if (isProperType(S) && isProperType(T)) {
+            throw new UnsupportedOperationException();
+        }
+
         // - Otherwise, if S is the null type, the constraint reduces to true.
-        //
+
+        if (S instanceof NullType) {
+            return ReductionResult.trueResult();
+        }
+
         // - Otherwise, if T is the null type, the constraint reduces to false.
-        //
+
+        if (T instanceof NullType) {
+            return ReductionResult.falseResult();
+        }
+
         // - Otherwise, if S is an inference variable, α, the constraint reduces to the bound α <: T.
-        //
+
+        if (isInferenceVariable(S)) {
+            return ReductionResult.oneBound(new SubtypeOfBound(S, T));
+        }
+
         // - Otherwise, if T is an inference variable, α, the constraint reduces to the bound S <: α.
-        //
+
+        if (isInferenceVariable(T)) {
+            return ReductionResult.oneBound(new SubtypeOfBound(S, T));
+        }
+
         // - Otherwise, the constraint is reduced according to the form of T:
         //
         //   - If T is a parameterized class or interface type, or an inner class type of a parameterized class or interface type (directly or indirectly), let A1, ..., An be the type arguments of T. Among the supertypes of S, a corresponding class or interface type is identified, with type arguments B1, ..., Bn. If no such type exists, the constraint reduces to false. Otherwise, the constraint reduces to the following new constraints: for all i (1 ≤ i ≤ n), ‹Bi <= Ai›.
@@ -54,5 +80,31 @@ public class TypeSubtypeOfType extends ConstraintFormula {
         //
 
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TypeSubtypeOfType that = (TypeSubtypeOfType) o;
+
+        if (!S.equals(that.S)) return false;
+        return T.equals(that.T);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = S.hashCode();
+        result = 31 * result + T.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "TypeSubtypeOfType{" +
+                "S=" + S +
+                ", T=" + T +
+                '}';
     }
 }

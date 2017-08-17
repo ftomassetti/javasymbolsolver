@@ -4,6 +4,8 @@ import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.resolution.typeinference.BoundSet;
 import com.github.javaparser.symbolsolver.resolution.typeinference.ConstraintFormula;
 
+import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.isProperType;
+
 /**
  * A type argument S is contained by a type argument T
  */
@@ -16,30 +18,49 @@ public class TypeContainedByType extends ConstraintFormula {
         // A constraint formula of the form ‹S <= T›, where S and T are type arguments (§4.5.1), is reduced as follows:
         //
         // - If T is a type:
-        //
-        //   - If S is a type, the constraint reduces to ‹S = T›.
-        //
-        //   - If S is a wildcard, the constraint reduces to false.
-        //
+
+        if (isProperType(T) && !T.isWildcard()) {
+
+            //   - If S is a type, the constraint reduces to ‹S = T›.
+            //
+            //   - If S is a wildcard, the constraint reduces to false.
+
+            throw new UnsupportedOperationException();
+        }
+
         // - If T is a wildcard of the form ?, the constraint reduces to true.
-        //
+
+        if (T.isWildcard() && !T.asWildcard().isBounded()) {
+            return ReductionResult.trueResult();
+        }
+
         // - If T is a wildcard of the form ? extends T':
-        //
-        //   - If S is a type, the constraint reduces to ‹S <: T'›.
-        //
-        //   - If S is a wildcard of the form ?, the constraint reduces to ‹Object <: T'›.
-        //
-        //   - If S is a wildcard of the form ? extends S', the constraint reduces to ‹S' <: T'›.
-        //
-        //   - If S is a wildcard of the form ? super S', the constraint reduces to ‹Object = T'›.
-        //
+
+        if (T.isWildcard() && T.asWildcard().isExtends()) {
+
+            //   - If S is a type, the constraint reduces to ‹S <: T'›.
+            //
+            //   - If S is a wildcard of the form ?, the constraint reduces to ‹Object <: T'›.
+            //
+            //   - If S is a wildcard of the form ? extends S', the constraint reduces to ‹S' <: T'›.
+            //
+            //   - If S is a wildcard of the form ? super S', the constraint reduces to ‹Object = T'›.
+
+            throw new UnsupportedOperationException();
+        }
+
         // - If T is a wildcard of the form ? super T':
-        //
-        //   - If S is a type, the constraint reduces to ‹T' <: S›.
-        //
-        //   - If S is a wildcard of the form ? super S', the constraint reduces to ‹T' <: S'›.
-        //
-        //   - Otherwise, the constraint reduces to false.
+
+        if (T.isWildcard() && T.asWildcard().isSuper()) {
+
+            //   - If S is a type, the constraint reduces to ‹T' <: S›.
+            //
+            //   - If S is a wildcard of the form ? super S', the constraint reduces to ‹T' <: S'›.
+            //
+            //   - Otherwise, the constraint reduces to false.
+
+            throw new UnsupportedOperationException();
+        }
 
         throw new UnsupportedOperationException();
     }
