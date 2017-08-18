@@ -35,6 +35,22 @@ public class JavaParserAnonymousClassDeclarationTest extends AbstractResolutionT
   }
 
   @Test
+  public void anonymousClassAsMethodArgumentUsingTypeInference() throws Exception {
+    CompilationUnit cu = parseSample("AnonymousClassDeclarations");
+    ClassOrInterfaceDeclaration aClass = Navigator.demandClass(cu, "AnonymousClassDeclarations");
+    MethodDeclaration method = Navigator.demandMethod(aClass, "fooBar1");
+    MethodCallExpr methodCall = Navigator.findMethodCall(method, "of");
+
+    CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
+    combinedTypeSolver.add(new ReflectionTypeSolver());
+    MethodUsage methodUsage =
+            JavaParserFacade.get(combinedTypeSolver).solveMethodAsUsageUsingTypeInference(methodCall);
+
+    assertThat(methodUsage.getQualifiedSignature(),
+            is("AnonymousClassDeclarations.ParDo.of(AnonymousClassDeclarations.DoFn<I, O>)"));
+  }
+
+  @Test
   public void callingSuperClassInnerClassMethod() throws Exception {
     CompilationUnit cu = parseSample("AnonymousClassDeclarations");
     ClassOrInterfaceDeclaration aClass = Navigator.demandClass(cu, "AnonymousClassDeclarations");

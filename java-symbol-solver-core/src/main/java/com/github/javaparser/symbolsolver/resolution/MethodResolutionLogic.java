@@ -18,6 +18,7 @@ package com.github.javaparser.symbolsolver.resolution;
 
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.core.resolution.Context;
+import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserAnonymousClassDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserEnumDeclaration;
@@ -587,7 +588,9 @@ public class MethodResolutionLogic {
     public static SymbolReference<MethodDeclaration> solveMethodInTypeUsingTypeInference(TypeDeclaration typeDeclaration,
                                                                                          MethodCallExpr call, boolean staticOnly,
                                                                                          TypeSolver typeSolver) {
-        throw new UnsupportedOperationException();
+        // TODO not sure it needs to be changed
+        List<Type> argumentsTypes = call.getArguments().stream().map(a -> JavaParserFacade.get(typeSolver).getType(a)).collect(Collectors.toList());
+        return solveMethodInType(typeDeclaration, call.getNameAsString(), argumentsTypes, staticOnly, typeSolver);
     }
 
     /**
