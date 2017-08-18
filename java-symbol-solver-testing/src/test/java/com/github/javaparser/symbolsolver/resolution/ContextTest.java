@@ -393,6 +393,20 @@ public class ContextTest extends AbstractTest {
     }
 
     @Test
+    public void resolveTypeUsageOfCascadeMethodInGenericClassUsingTypeInference() throws ParseException, IOException {
+        CompilationUnit cu = parseSample("Navigator");
+        com.github.javaparser.ast.body.ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "Navigator");
+        MethodDeclaration method = Navigator.demandMethod(clazz, "findType");
+        MethodCallExpr callToFilter = Navigator.findMethodCall(method, "filter");
+
+        String pathToJar = adaptPath("src/test/resources/javaparser-core-2.1.0.jar");
+        TypeSolver typeSolver = new CombinedTypeSolver(new ReflectionTypeSolver(), new JarTypeSolver(pathToJar));
+        MethodUsage filterUsage = JavaParserFacade.get(typeSolver).solveMethodAsUsageUsingTypeInference(callToFilter);
+
+        assertEquals("java.util.stream.Stream<com.github.javaparser.ast.body.TypeDeclaration>", filterUsage.returnType().describe());
+    }
+
+    @Test
     public void resolveLambdaType() throws ParseException, IOException {
         CompilationUnit cu = parseSample("Navigator");
         com.github.javaparser.ast.body.ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "Navigator");
@@ -468,6 +482,21 @@ public class ContextTest extends AbstractTest {
     }
 
     @Test
+    public void resolveReferenceToOverloadMethodWithNullParamUsingTypeInference() throws ParseException, IOException {
+        CompilationUnit cu = parseSample("OverloadedMethods");
+        com.github.javaparser.ast.body.ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "OverloadedMethods");
+        MethodDeclaration method = Navigator.demandMethod(clazz, "m1");
+        MethodCallExpr call = Navigator.findMethodCall(method, "overloaded");
+
+        ReflectionTypeSolver typeSolver = new ReflectionTypeSolver();
+        MethodUsage ref = JavaParserFacade.get(typeSolver).solveMethodAsUsageUsingTypeInference(call);
+
+        assertEquals("overloaded", ref.getName());
+        assertEquals(1, ref.getNoParams());
+        assertEquals("java.lang.String", ref.getParamTypes().get(0).describe());
+    }
+
+    @Test
     public void resolveReferenceToOverloadMethodFindStricter() throws ParseException, IOException {
         CompilationUnit cu = parseSample("OverloadedMethods");
         com.github.javaparser.ast.body.ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "OverloadedMethods");
@@ -476,6 +505,21 @@ public class ContextTest extends AbstractTest {
 
         ReflectionTypeSolver typeSolver = new ReflectionTypeSolver();
         MethodUsage ref = JavaParserFacade.get(typeSolver).solveMethodAsUsage(call);
+
+        assertEquals("overloaded", ref.getName());
+        assertEquals(1, ref.getNoParams());
+        assertEquals("java.lang.String", ref.getParamTypes().get(0).describe());
+    }
+
+    @Test
+    public void resolveReferenceToOverloadMethodFindStricterUsingTypeInference() throws ParseException, IOException {
+        CompilationUnit cu = parseSample("OverloadedMethods");
+        com.github.javaparser.ast.body.ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "OverloadedMethods");
+        MethodDeclaration method = Navigator.demandMethod(clazz, "m2");
+        MethodCallExpr call = Navigator.findMethodCall(method, "overloaded");
+
+        ReflectionTypeSolver typeSolver = new ReflectionTypeSolver();
+        MethodUsage ref = JavaParserFacade.get(typeSolver).solveMethodAsUsageUsingTypeInference(call);
 
         assertEquals("overloaded", ref.getName());
         assertEquals(1, ref.getNoParams());
@@ -505,6 +549,21 @@ public class ContextTest extends AbstractTest {
 
         ReflectionTypeSolver typeSolver = new ReflectionTypeSolver();
         MethodUsage ref = JavaParserFacade.get(typeSolver).solveMethodAsUsage(call);
+
+        assertEquals("overloaded", ref.getName());
+        assertEquals(1, ref.getNoParams());
+        assertEquals("java.lang.Object", ref.getParamTypes().get(0).describe());
+    }
+
+    @Test
+    public void resolveReferenceToOverloadMethodFindOnlyCompatibleUsingTypeInference() throws ParseException, IOException {
+        CompilationUnit cu = parseSample("OverloadedMethods");
+        com.github.javaparser.ast.body.ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "OverloadedMethods");
+        MethodDeclaration method = Navigator.demandMethod(clazz, "m3");
+        MethodCallExpr call = Navigator.findMethodCall(method, "overloaded");
+
+        ReflectionTypeSolver typeSolver = new ReflectionTypeSolver();
+        MethodUsage ref = JavaParserFacade.get(typeSolver).solveMethodAsUsageUsingTypeInference(call);
 
         assertEquals("overloaded", ref.getName());
         assertEquals(1, ref.getNoParams());
