@@ -59,6 +59,17 @@ public class MethodsResolutionTest extends AbstractResolutionTest {
     }
 
     @Test
+    public void solveMethodWithClassExpressionAsParameterUsingTypeInference() throws ParseException {
+        CompilationUnit cu = parseSample("ClassExpression");
+        com.github.javaparser.ast.body.ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "ClassExpression");
+        MethodDeclaration method = Navigator.demandMethod(clazz, "foo");
+        MethodCallExpr expression = Navigator.findMethodCall(method, "noneOf");
+
+        MethodUsage methodUsage = JavaParserFacade.get(new ReflectionTypeSolver()).solveMethodAsUsageUsingTypeInference(expression);
+        assertEquals("noneOf", methodUsage.getName());
+    }
+
+    @Test
     public void solveMethodInInterfaceParent() throws ParseException {
         CompilationUnit cu = parseSample("MethodCalls");
         ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "MethodCalls");
@@ -70,6 +81,21 @@ public class MethodsResolutionTest extends AbstractResolutionTest {
 
         JavaParserFacade javaParserFacade = JavaParserFacade.get(typeSolver);
         MethodUsage call1 = javaParserFacade.solveMethodAsUsage(expression);
+        assertEquals("java.lang.Object.toString()", call1.getQualifiedSignature());
+    }
+
+    @Test
+    public void solveMethodInInterfaceParentUsingTypeInference() throws ParseException {
+        CompilationUnit cu = parseSample("MethodCalls");
+        ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "MethodCalls");
+
+        MethodDeclaration method = Navigator.demandMethod(clazz, "inheritedInterfaceMethod");
+        MethodCallExpr expression = Navigator.findMethodCall(method, "toString");
+
+        TypeSolver typeSolver = new ReflectionTypeSolver();
+
+        JavaParserFacade javaParserFacade = JavaParserFacade.get(typeSolver);
+        MethodUsage call1 = javaParserFacade.solveMethodAsUsageUsingTypeInference(expression);
         assertEquals("java.lang.Object.toString()", call1.getQualifiedSignature());
     }
 }
