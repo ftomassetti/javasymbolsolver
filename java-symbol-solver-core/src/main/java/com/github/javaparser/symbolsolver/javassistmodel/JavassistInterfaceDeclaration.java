@@ -16,6 +16,7 @@
 
 package com.github.javaparser.symbolsolver.javassistmodel;
 
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.core.resolution.Context;
 import com.github.javaparser.symbolsolver.logic.AbstractTypeDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.*;
@@ -92,6 +93,13 @@ public class JavassistInterfaceDeclaration extends AbstractTypeDeclaration imple
     @Override
     public String getQualifiedName() {
         return ctClass.getName().replace('$', '.');
+    }
+
+    @Deprecated
+    public Optional<MethodUsage> solveMethodAsUsageUsingTypeInference(MethodCallExpr methodCall, TypeSolver typeSolver,
+                                                                      Context invokationContext, List<Type> typeParameterValues) {
+
+        return JavassistUtils.getMethodUsageUsingTypeInference(ctClass, methodCall, typeSolver, invokationContext);
     }
 
     @Deprecated

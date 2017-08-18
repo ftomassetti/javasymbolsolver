@@ -16,6 +16,7 @@
 
 package com.github.javaparser.symbolsolver.javassistmodel;
 
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.core.resolution.Context;
 import com.github.javaparser.symbolsolver.model.declarations.ReferenceTypeDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.TypeParameterDeclaration;
@@ -39,6 +40,62 @@ import java.util.stream.Collectors;
  */
 class JavassistUtils {
 
+    static Optional<MethodUsage> getMethodUsageUsingTypeInference(CtClass ctClass, MethodCallExpr methodCall,
+                                                                  TypeSolver typeSolver, Context invokationContext) {
+        // TODO avoid bridge and synthetic methods
+        for (CtMethod method : ctClass.getDeclaredMethods()) {
+            if (method.getName().equals(methodCall.getNameAsString())) {
+                // TODO check typeParametersValues
+                MethodUsage methodUsage = new MethodUsage(new JavassistMethodDeclaration(method, typeSolver));
+                if (methodCall.getArguments().size() < methodUsage.getNoParams()) {
+                    // this method cannot be a good candidate (except if variadic ?)
+                    continue;
+                }
+                try {
+                    if (method.getGenericSignature() != null) {
+                        SignatureAttribute.MethodSignature classSignature = SignatureAttribute.toMethodSignature(method.getGenericSignature());
+                        List<Type> parametersOfReturnType = parseTypeParameters(classSignature.getReturnType().toString(), typeSolver, invokationContext);
+                        Type newReturnType = methodUsage.returnType();
+                        // consume one parametersOfReturnType at the time
+                        if (!(newReturnType instanceof VoidType)) {
+                            newReturnType = newReturnType.asReferenceType().transformTypeParameters(tp -> parametersOfReturnType.remove(0));
+                        }
+                        methodUsage = methodUsage.replaceReturnType(newReturnType);
+                    }
+                    return Optional.of(methodUsage);
+                } catch (BadBytecode e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        try {
+            CtClass superClass = ctClass.getSuperclass();
+            if (superClass != null) {
+                Optional<MethodUsage> ref = new JavassistClassDeclaration(superClass, typeSolver).solveMethodAsUsageUsingTypeInference(methodCall, typeSolver, invokationContext, null);
+                if (ref.isPresent()) {
+                    return ref;
+                }
+            }
+        } catch (NotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            for (CtClass interfaze : ctClass.getInterfaces()) {
+                Optional<MethodUsage> ref = new JavassistInterfaceDeclaration(interfaze, typeSolver).solveMethodAsUsageUsingTypeInference(methodCall, typeSolver, invokationContext, null);
+                if (ref.isPresent()) {
+                    return ref;
+                }
+            }
+        } catch (NotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        return Optional.empty();
+    }
+
+    @Deprecated
     static Optional<MethodUsage> getMethodUsage(CtClass ctClass, String name, List<Type> argumentsTypes, TypeSolver typeSolver, Context invokationContext) {
         // TODO avoid bridge and synthetic methods
         for (CtMethod method : ctClass.getDeclaredMethods()) {
