@@ -132,7 +132,6 @@ public class TypeInferenceAPI {
 
         //   - To test for applicability by strict invocation:
 
-
         if (!C.isPresent()) {
             C = testForApplicabilityByStrictInvocation(Fs, es, theta);
         }
@@ -140,7 +139,7 @@ public class TypeInferenceAPI {
         //   - To test for applicability by loose invocation:
 
         if (!C.isPresent()) {
-            C = testForApplicabilityByLooseInvocation();
+            C = testForApplicabilityByLooseInvocation(Fs, es, theta);
         }
 
         //   - To test for applicability by variable arity invocation:
@@ -271,6 +270,29 @@ public class TypeInferenceAPI {
         //
         // Otherwise, C includes, for all i (1 ≤ i ≤ k) where ei is pertinent to applicability, ‹ei → Fi θ›.
 
+        return Optional.of(constraintSetFromArgumentsSubstitution(Fs, es, theta, k));
+    }
+
+    private Type typeWithSubstitution(Type originalType, Substitution substitution) {
+        return substitution.apply(originalType);
+    }
+
+    private Optional<ConstraintFormulaSet> testForApplicabilityByLooseInvocation(List<Type> Fs, List<Expression> es,
+                                                                                 Substitution theta) {
+        int n = Fs.size();
+        int k = es.size();
+
+        // If k ≠ n, the method is not applicable and there is no need to proceed with inference.
+
+        if (k != n) {
+            return Optional.empty();
+        }
+
+        // Otherwise, C includes, for all i (1 ≤ i ≤ k) where ei is pertinent to applicability, ‹ei → Fi θ›.
+        return Optional.of(constraintSetFromArgumentsSubstitution(Fs, es, theta, k));
+    }
+
+    private ConstraintFormulaSet constraintSetFromArgumentsSubstitution(List<Type> Fs, List<Expression> es, Substitution theta, int k) {
         ConstraintFormulaSet constraintFormulaSet = ConstraintFormulaSet.empty();
         for (int i=0;i<k;i++) {
             Expression ei = es.get(i);
@@ -279,22 +301,13 @@ public class TypeInferenceAPI {
             constraintFormulaSet = constraintFormulaSet.addConstraint(
                     new ExpressionCompatibleWithType(typeSolver, ei, fiTheta));
         }
-
-        return Optional.of(constraintFormulaSet);
-    }
-
-    private Type typeWithSubstitution(Type originalType, Substitution substitution) {
-        return substitution.apply(originalType);
-    }
-
-    private Optional<ConstraintFormulaSet> testForApplicabilityByLooseInvocation() {
-        // Let F'1, ..., F'k be the first k variable arity parameter types of m (§15.12.2.4). C includes,
-        // for all i (1 ≤ i ≤ k) where ei is pertinent to applicability, ‹ei → F'i θ›.
-
-        throw new UnsupportedOperationException();
+        return constraintFormulaSet;
     }
 
     private Optional<ConstraintFormulaSet> testForApplicabilityByVariableArityInvocation() {
+        // Let F'1, ..., F'k be the first k variable arity parameter types of m (§15.12.2.4). C includes,
+        // for all i (1 ≤ i ≤ k) where ei is pertinent to applicability, ‹ei → F'i θ›.
+
         throw new UnsupportedOperationException();
     }
 
