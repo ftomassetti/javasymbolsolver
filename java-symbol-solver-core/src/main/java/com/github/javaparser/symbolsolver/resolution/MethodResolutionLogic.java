@@ -16,6 +16,7 @@
 
 package com.github.javaparser.symbolsolver.resolution;
 
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.core.resolution.Context;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserAnonymousClassDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
@@ -33,6 +34,7 @@ import com.github.javaparser.symbolsolver.model.typesystem.*;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionClassDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionEnumDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionInterfaceDeclaration;
+import com.github.javaparser.symbolsolver.resolution.typeinference.TypeInferenceAPI;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -260,6 +262,11 @@ public class MethodResolutionLogic {
         } else {
             throw new UnsupportedOperationException("Replacing " + type + ", param " + tp + " with " + type.getClass().getCanonicalName());
         }
+    }
+
+    public static boolean isApplicableUsingTypeInference(MethodDeclaration method, MethodCallExpr methodCallExpr, TypeSolver typeSolver) {
+        TypeInferenceAPI typeInferenceAPI = new TypeInferenceAPI(typeSolver);
+        return typeInferenceAPI.invocationApplicabilityInference(methodCallExpr, method);
     }
 
     public static boolean isApplicable(MethodUsage method, String name, List<Type> argumentsTypes, TypeSolver typeSolver) {
