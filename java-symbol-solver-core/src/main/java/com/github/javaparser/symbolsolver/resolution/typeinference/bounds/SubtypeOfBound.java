@@ -8,6 +8,7 @@ import com.github.javaparser.symbolsolver.resolution.typeinference.ProperUpperBo
 import com.github.javaparser.utils.Pair;
 
 import java.util.Optional;
+import java.util.Set;
 
 import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.isInferenceVariable;
 import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.isProperType;
@@ -21,6 +22,11 @@ public class SubtypeOfBound extends Bound {
 
     public Type getS() {
         return s;
+    }
+
+    @Override
+    public Set<InferenceVariable> usedInferenceVariables() {
+        throw new UnsupportedOperationException();
     }
 
     public Type getT() {
