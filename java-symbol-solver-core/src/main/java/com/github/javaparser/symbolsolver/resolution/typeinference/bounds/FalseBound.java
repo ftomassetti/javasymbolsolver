@@ -2,6 +2,7 @@ package com.github.javaparser.symbolsolver.resolution.typeinference.bounds;
 
 import com.github.javaparser.symbolsolver.resolution.typeinference.Bound;
 import com.github.javaparser.symbolsolver.resolution.typeinference.InferenceVariable;
+import com.github.javaparser.symbolsolver.resolution.typeinference.InferenceVariableSubstitution;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -14,6 +15,10 @@ public class FalseBound extends Bound {
 
     private static FalseBound INSTANCE = new FalseBound();
 
+    private FalseBound() {
+
+    }
+
     public static FalseBound getInstance() {
         return INSTANCE;
     }
@@ -23,12 +28,8 @@ public class FalseBound extends Bound {
         return "FalseBound{}";
     }
 
-    private FalseBound() {
-
-    }
-
     @Override
-    public boolean isSatisfied(InferenceVariable inferenceVariable) {
+    public boolean isSatisfied(InferenceVariableSubstitution inferenceVariableSubstitution) {
         return false;
     }
 

@@ -2,7 +2,10 @@ package com.github.javaparser.symbolsolver.resolution.typeinference.bounds;
 
 import com.github.javaparser.symbolsolver.resolution.typeinference.Bound;
 import com.github.javaparser.symbolsolver.resolution.typeinference.InferenceVariable;
+import com.github.javaparser.symbolsolver.resolution.typeinference.InferenceVariableSubstitution;
+import com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -10,6 +13,10 @@ import java.util.Set;
  */
 public class ThrowsBound extends Bound {
     private InferenceVariable inferenceVariable;
+
+    public ThrowsBound(InferenceVariable inferenceVariable) {
+        this.inferenceVariable = inferenceVariable;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -33,13 +40,15 @@ public class ThrowsBound extends Bound {
         return inferenceVariable.hashCode();
     }
 
-    public ThrowsBound(InferenceVariable inferenceVariable) {
-        this.inferenceVariable = inferenceVariable;
-    }
-
-
     @Override
     public Set<InferenceVariable> usedInferenceVariables() {
+        Set<InferenceVariable> variables = new HashSet<>();
+        variables.add(inferenceVariable);
+        return variables;
+    }
+
+    @Override
+    public boolean isSatisfied(InferenceVariableSubstitution inferenceVariableSubstitution) {
         throw new UnsupportedOperationException();
     }
 }
