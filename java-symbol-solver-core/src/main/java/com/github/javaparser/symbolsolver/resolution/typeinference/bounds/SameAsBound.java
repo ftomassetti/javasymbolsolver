@@ -20,6 +20,32 @@ public class SameAsBound extends Bound {
     private Type t;
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SameAsBound that = (SameAsBound) o;
+
+        if (!s.equals(that.s)) return false;
+        return t.equals(that.t);
+    }
+
+    @Override
+    public String toString() {
+        return "SameAsBound{" +
+                "s=" + s +
+                ", t=" + t +
+                '}';
+    }
+
+    @Override
+    public int hashCode() {
+        int result = s.hashCode();
+        result = 31 * result + t.hashCode();
+        return result;
+    }
+
+    @Override
     public Set<InferenceVariable> usedInferenceVariables() {
         throw new UnsupportedOperationException();
     }

@@ -20,6 +20,32 @@ public class SubtypeOfBound extends Bound {
     private Type s;
     private Type t;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SubtypeOfBound that = (SubtypeOfBound) o;
+
+        if (!s.equals(that.s)) return false;
+        return t.equals(that.t);
+    }
+
+    @Override
+    public String toString() {
+        return "SubtypeOfBound{" +
+                "s=" + s +
+                ", t=" + t +
+                '}';
+    }
+
+    @Override
+    public int hashCode() {
+        int result = s.hashCode();
+        result = 31 * result + t.hashCode();
+        return result;
+    }
+
     public Type getS() {
         return s;
     }
