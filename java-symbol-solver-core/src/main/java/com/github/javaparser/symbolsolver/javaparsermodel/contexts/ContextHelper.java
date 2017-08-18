@@ -65,7 +65,7 @@ public class ContextHelper {
         } else if (typeDeclaration instanceof JavaParserInterfaceDeclaration) {
             // return ((JavaParserInterfaceDeclaration) typeDeclaration).getContext().solveMethodAsUsage(name, argumentsTypes, typeSolver);
         } else if (typeDeclaration instanceof JavaParserEnumDeclaration) {
-            // return ((JavaParserEnumDeclaration) typeDeclaration).getContext().solveMethodAsUsage(name, argumentsTypes, typeSolver);
+            return ((JavaParserEnumDeclaration) typeDeclaration).getContext().solveMethodAsUsageUsingTypeInference(methodCall, typeSolver);
         }
         throw new UnsupportedOperationException(typeDeclaration.toString());
     }
