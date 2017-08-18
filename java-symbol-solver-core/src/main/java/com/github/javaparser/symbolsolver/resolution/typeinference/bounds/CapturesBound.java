@@ -32,4 +32,30 @@ public class CapturesBound extends Bound {
     public List<Type> getTypesOrWildcards() {
         return typesOrWildcards;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CapturesBound that = (CapturesBound) o;
+
+        if (!inferenceVariables.equals(that.inferenceVariables)) return false;
+        return typesOrWildcards.equals(that.typesOrWildcards);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = inferenceVariables.hashCode();
+        result = 31 * result + typesOrWildcards.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "CapturesBound{" +
+                "inferenceVariables=" + inferenceVariables +
+                ", typesOrWildcards=" + typesOrWildcards +
+                '}';
+    }
 }

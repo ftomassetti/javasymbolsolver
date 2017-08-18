@@ -11,6 +11,22 @@ import java.util.Set;
  * No valid choice of inference variables exists.
  */
 public class FalseBound extends Bound {
+
+    private static FalseBound INSTANCE = new FalseBound();
+
+    public static FalseBound getInstance() {
+        return INSTANCE;
+    }
+
+    @Override
+    public String toString() {
+        return "FalseBound{}";
+    }
+
+    private FalseBound() {
+
+    }
+
     @Override
     public boolean isSatisfied(InferenceVariable inferenceVariable) {
         return false;
