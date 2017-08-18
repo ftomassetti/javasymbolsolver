@@ -34,7 +34,7 @@ public class ExpressionCompatibleWithType extends ConstraintFormula {
         // invocation context with T (§5.3), and false otherwise.
 
         if (isProperType(T)) {
-            if (isCompatibleInALooseInvocationContext(expression, T)) {
+            if (isCompatibleInALooseInvocationContext(typeSolver, expression, T)) {
                 return ReductionResult.trueResult();
             } else {
                 return ReductionResult.falseResult();
