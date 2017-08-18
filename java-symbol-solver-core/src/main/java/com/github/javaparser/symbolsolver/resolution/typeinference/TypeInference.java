@@ -173,7 +173,7 @@ public class TypeInference {
             return Optional.empty();
         }
 
-        Optional<InstantiationSet> instantiation = B2.performResolution(alphas);
+        Optional<InstantiationSet> instantiation = B2.performResolution(alphas, typeSolver);
         return instantiation;
     }
 
@@ -603,7 +603,7 @@ public class TypeInference {
             if (instantiationSet.isEmpty()) {
                 return new MethodUsage(methodDeclaration);
             }
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("InstantiationSet = " + instantiationSet);
         } else {
             throw new IllegalArgumentException();
         }

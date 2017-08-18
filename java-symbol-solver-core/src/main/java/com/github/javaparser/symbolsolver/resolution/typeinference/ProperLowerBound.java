@@ -39,4 +39,12 @@ public class ProperLowerBound {
                 ", properType=" + properType +
                 '}';
     }
+
+    public InferenceVariable getInferenceVariable() {
+        return inferenceVariable;
+    }
+
+    public Type getProperType() {
+        return properType;
+    }
 }

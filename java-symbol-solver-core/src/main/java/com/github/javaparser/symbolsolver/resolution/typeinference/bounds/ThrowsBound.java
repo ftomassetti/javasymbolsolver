@@ -56,4 +56,8 @@ public class ThrowsBound extends Bound {
     public boolean isSatisfied(InferenceVariableSubstitution inferenceVariableSubstitution) {
         throw new UnsupportedOperationException();
     }
+
+    public boolean isThrowsBoundOn(InferenceVariable inferenceVariable) {
+        return inferenceVariable.equals(this.inferenceVariable);
+    }
 }

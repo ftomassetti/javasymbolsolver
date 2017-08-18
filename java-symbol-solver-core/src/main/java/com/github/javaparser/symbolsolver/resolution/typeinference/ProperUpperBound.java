@@ -39,4 +39,12 @@ public class ProperUpperBound {
                 ", properType=" + properType +
                 '}';
     }
+
+    public InferenceVariable getInferenceVariable() {
+        return inferenceVariable;
+    }
+
+    public Type getProperType() {
+        return properType;
+    }
 }

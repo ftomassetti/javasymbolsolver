@@ -73,4 +73,12 @@ public class InferenceVariable implements Type {
         }
         return typeParameterDeclaration;
     }
+
+    @Override
+    public String toString() {
+        return "InferenceVariable{" +
+                "name='" + name + '\'' +
+                ", typeParameterDeclaration=" + typeParameterDeclaration +
+                '}';
+    }
 }

@@ -54,6 +54,24 @@ public abstract class Bound {
         return Optional.empty();
     }
 
+    public Optional<ProperLowerBound> isProperLowerBoundFor(InferenceVariable inferenceVariable) {
+        Optional<ProperLowerBound> partial = isProperLowerBound();
+        if (partial.isPresent() && partial.get().getInferenceVariable().equals(inferenceVariable)) {
+            return partial;
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public Optional<ProperUpperBound> isProperUpperBoundFor(InferenceVariable inferenceVariable) {
+        Optional<ProperUpperBound> partial = isProperUpperBound();
+        if (partial.isPresent() && partial.get().getInferenceVariable().equals(inferenceVariable)) {
+            return partial;
+        } else {
+            return Optional.empty();
+        }
+    }
+
     /**
      * Other bounds relate two inference variables, or an inference variable to a type that contains inference
      * variables. Such bounds, of the form S = T or S <: T, are called dependencies.
@@ -63,4 +81,8 @@ public abstract class Bound {
     }
 
     public abstract Set<InferenceVariable> usedInferenceVariables();
+
+    public boolean isThrowsBoundOn(InferenceVariable inferenceVariable) {
+        return false;
+    }
 }
