@@ -182,7 +182,22 @@ public class TypeInference {
      * provides no explicit type arguments.
      */
     public boolean invocationApplicabilityInference(MethodCallExpr methodCallExpr, MethodDeclaration methodDeclaration) {
-        return instantiationInference(methodCallExpr, methodDeclaration).isPresent();
+        if (!methodCallExpr.getNameAsString().equals(methodDeclaration.getName())) {
+            throw new IllegalArgumentException();
+        }
+        Optional<InstantiationSet> partial = instantiationInference(methodCallExpr, methodDeclaration);
+        if (!partial.isPresent()) {
+            return false;
+        }
+        //MethodUsage methodUsage = instantiationSetToMethodUsage(methodDeclaration, partial.get());
+        for (int i=0;i<methodDeclaration.getNumberOfParams();i++) {
+            Type formalType = methodDeclaration.getParam(i).getType();
+            Type actualType = JavaParserFacade.get(typeSolver).getType(methodCallExpr.getArgument(i));
+            if (!formalType.isAssignableBy(actualType)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean isImplicitlyTyped(LambdaExpr lambdaExpr) {
@@ -599,18 +614,21 @@ public class TypeInference {
         TypeInference typeInference = new TypeInference(typeSolver);
         Optional<InstantiationSet> instantiationSetOpt = typeInference.instantiationInference(call, methodDeclaration);
         if (instantiationSetOpt.isPresent()) {
-            InstantiationSet instantiationSet = instantiationSetOpt.get();
-            if (instantiationSet.isEmpty()) {
-                return new MethodUsage(methodDeclaration);
-            }
-            List<Type> paramTypes = new LinkedList<>();
-            for (int i=0;i<methodDeclaration.getNumberOfParams();i++) {
-                paramTypes.add(instantiationSet.apply(methodDeclaration.getParam(i).getType()));
-            }
-            Type returnType = instantiationSet.apply(methodDeclaration.getReturnType());
-            return new MethodUsage(methodDeclaration, paramTypes, returnType);
+            return instantiationSetToMethodUsage(methodDeclaration, instantiationSetOpt.get());
         } else {
             throw new IllegalArgumentException();
         }
+    }
+
+    private static MethodUsage instantiationSetToMethodUsage(MethodDeclaration methodDeclaration, InstantiationSet instantiationSet) {
+        if (instantiationSet.isEmpty()) {
+            return new MethodUsage(methodDeclaration);
+        }
+        List<Type> paramTypes = new LinkedList<>();
+        for (int i=0;i<methodDeclaration.getNumberOfParams();i++) {
+            paramTypes.add(instantiationSet.apply(methodDeclaration.getParam(i).getType()));
+        }
+        Type returnType = instantiationSet.apply(methodDeclaration.getReturnType());
+        return new MethodUsage(methodDeclaration, paramTypes, returnType);
     }
 }
