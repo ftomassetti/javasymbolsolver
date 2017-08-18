@@ -1,27 +1,24 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference;
 
-import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.resolution.typeinference.bounds.FalseBound;
-import com.github.javaparser.utils.Pair;
-import com.sun.tools.javac.comp.Infer;
 
-import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Bound are defined for Inference Variables.
+ */
 public abstract class Bound {
 
     public static Bound falseBound() {
-        return new FalseBound();
+        return FalseBound.getInstance();
     }
 
     /**
      * A bound is satisfied by an inference variable substitution if, after applying the substitution,
      * the assertion is true.
      */
-    public boolean isSatisfied(InferenceVariable inferenceVariable) {
-        throw new UnsupportedOperationException();
-    }
+    public abstract boolean isSatisfied(InferenceVariableSubstitution inferenceVariableSubstitution);
 
     /**
      * Given a bound of the form α = T or T = α, we say T is an instantiation of α.

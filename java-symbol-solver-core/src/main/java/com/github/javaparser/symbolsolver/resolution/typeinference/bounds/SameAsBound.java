@@ -1,11 +1,11 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference.bounds;
 
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
-import com.github.javaparser.symbolsolver.resolution.typeinference.Bound;
-import com.github.javaparser.symbolsolver.resolution.typeinference.InferenceVariable;
-import com.github.javaparser.symbolsolver.resolution.typeinference.Instantiation;
+import com.github.javaparser.symbolsolver.resolution.typeinference.*;
 import com.github.javaparser.utils.Pair;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -13,11 +13,19 @@ import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHe
 import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.isProperType;
 
 /**
- * At least one of S or T is an inference variable: S is the same as T
+ * S = T, where at least one of S or T is an inference variable: S is the same as T.
  */
 public class SameAsBound extends Bound {
     private Type s;
     private Type t;
+
+    public SameAsBound(Type s, Type t) {
+        if (!isInferenceVariable(s) && !isInferenceVariable(t)) {
+            throw new IllegalArgumentException("One of S or T should be an inference variable");
+        }
+        this.s = s;
+        this.t = t;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -47,7 +55,10 @@ public class SameAsBound extends Bound {
 
     @Override
     public Set<InferenceVariable> usedInferenceVariables() {
-        throw new UnsupportedOperationException();
+        Set<InferenceVariable> variables = new HashSet<>();
+        variables.addAll(TypeHelper.usedInferenceVariables(s));
+        variables.addAll(TypeHelper.usedInferenceVariables(t));
+        return variables;
     }
 
     public Type getS() {
@@ -63,14 +74,6 @@ public class SameAsBound extends Bound {
         return !isAnInstantiation().isPresent();
     }
 
-    public SameAsBound(Type s, Type t) {
-        if (!isInferenceVariable(s) && !isInferenceVariable(t)) {
-            throw new IllegalArgumentException("One of S or T should be an inference variable");
-        }
-        this.s = s;
-        this.t = t;
-    }
-
     @Override
     public Optional<Instantiation> isAnInstantiation() {
         if (isInferenceVariable(s) && isProperType(t)) {
@@ -80,5 +83,10 @@ public class SameAsBound extends Bound {
             return Optional.of(new Instantiation((InferenceVariable) t, s));
         }
         return Optional.empty();
+    }
+
+    @Override
+    public boolean isSatisfied(InferenceVariableSubstitution inferenceVariableSubstitution) {
+        throw new UnsupportedOperationException();
     }
 }

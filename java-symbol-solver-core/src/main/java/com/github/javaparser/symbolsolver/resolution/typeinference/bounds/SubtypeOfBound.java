@@ -1,12 +1,10 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference.bounds;
 
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
-import com.github.javaparser.symbolsolver.resolution.typeinference.Bound;
-import com.github.javaparser.symbolsolver.resolution.typeinference.InferenceVariable;
-import com.github.javaparser.symbolsolver.resolution.typeinference.ProperLowerBound;
-import com.github.javaparser.symbolsolver.resolution.typeinference.ProperUpperBound;
+import com.github.javaparser.symbolsolver.resolution.typeinference.*;
 import com.github.javaparser.utils.Pair;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -14,11 +12,19 @@ import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHe
 import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.isProperType;
 
 /**
- * Where at least one of S or T is an inference variable: S is a subtype of T
+ * S <: T, where at least one of S or T is an inference variable: S is a subtype of T
  */
 public class SubtypeOfBound extends Bound {
     private Type s;
     private Type t;
+
+    public SubtypeOfBound(Type s, Type t) {
+        if (!isInferenceVariable(s) && !isInferenceVariable(t)) {
+            throw new IllegalArgumentException("One of S or T should be an inference variable");
+        }
+        this.s = s;
+        this.t = t;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -52,19 +58,14 @@ public class SubtypeOfBound extends Bound {
 
     @Override
     public Set<InferenceVariable> usedInferenceVariables() {
-        throw new UnsupportedOperationException();
+        Set<InferenceVariable> variables = new HashSet<>();
+        variables.addAll(TypeHelper.usedInferenceVariables(s));
+        variables.addAll(TypeHelper.usedInferenceVariables(t));
+        return variables;
     }
 
     public Type getT() {
         return t;
-    }
-
-    public SubtypeOfBound(Type s, Type t) {
-        if (!isInferenceVariable(s) && !isInferenceVariable(t)) {
-            throw new IllegalArgumentException("One of S or T should be an inference variable");
-        }
-        this.s = s;
-        this.t = t;
     }
 
     @Override
@@ -86,5 +87,10 @@ public class SubtypeOfBound extends Bound {
     @Override
     public boolean isADependency() {
         return !isProperLowerBound().isPresent() && !isProperUpperBound().isPresent();
+    }
+
+    @Override
+    public boolean isSatisfied(InferenceVariableSubstitution inferenceVariableSubstitution) {
+        throw new UnsupportedOperationException();
     }
 }
