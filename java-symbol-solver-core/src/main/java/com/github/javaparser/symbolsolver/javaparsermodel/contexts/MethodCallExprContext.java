@@ -111,6 +111,10 @@ public class MethodCallExprContext extends AbstractJavaParserContext<MethodCallE
 //                argumentsTypes.set(i, updatedArgumentType);
 //            }
 
+            if (typeOfScope instanceof LambdaConstraintType) {
+                typeOfScope = ((LambdaConstraintType)typeOfScope).getBound();
+            }
+
             return solveMethodAsUsageUsingTypeInference(typeOfScope.asReferenceType(), call, typeSolver, this);
         } else {
             Context parentContext = getParent();

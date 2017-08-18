@@ -34,4 +34,11 @@ public class LambdaConstraintType  implements Type {
     public boolean isAssignableBy(Type other) {
         return bound.isAssignableBy(other);
     }
+
+    @Override
+    public String toString() {
+        return "LambdaConstraintType{" +
+                "bound=" + bound +
+                '}';
+    }
 }
