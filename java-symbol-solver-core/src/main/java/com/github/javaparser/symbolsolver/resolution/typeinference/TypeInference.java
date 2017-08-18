@@ -8,6 +8,7 @@ import com.github.javaparser.symbolsolver.model.declarations.MethodDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.TypeParameterDeclaration;
 import com.github.javaparser.symbolsolver.model.methods.MethodUsage;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
+import com.github.javaparser.symbolsolver.model.typesystem.ReferenceType;
 import com.github.javaparser.symbolsolver.model.typesystem.ReferenceTypeImpl;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.resolution.typeinference.bounds.SubtypeOfBound;
@@ -78,10 +79,13 @@ public class TypeInference {
     }
 
     private boolean appearInThrowsClause(TypeParameterDeclaration p, MethodDeclaration methodDeclaration) {
-        for (int j=0;j< methodDeclaration.getNumberOfSpecifiedExceptions();j++) {
-
+        for (int j=0;j<methodDeclaration.getNumberOfSpecifiedExceptions();j++) {
+            ReferenceType thrownType = methodDeclaration.getSpecifiedException(j);
+            if (thrownType.isTypeVariable() && thrownType.asTypeVariable().asTypeParameter().equals(p)) {
+                return true;
+            }
         }
-        throw new UnsupportedOperationException();
+        return false;
     }
 
     private List<Type> formalParameterTypes(MethodDeclaration methodDeclaration) {

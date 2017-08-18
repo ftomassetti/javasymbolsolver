@@ -16,6 +16,7 @@
 
 package com.github.javaparser.symbolsolver.model.declarations;
 
+import com.github.javaparser.symbolsolver.model.typesystem.ReferenceType;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 
 import java.util.Optional;
@@ -123,10 +124,10 @@ public interface MethodLikeDeclaration extends Declaration, TypeParametrizable, 
     }
 
     default int getNumberOfSpecifiedExceptions() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException(this.getClass().getCanonicalName());
     }
 
-    default Type getSpecifiedException(int index) {
+    default ReferenceType getSpecifiedException(int index) {
         throw new UnsupportedOperationException();
     }
 }
