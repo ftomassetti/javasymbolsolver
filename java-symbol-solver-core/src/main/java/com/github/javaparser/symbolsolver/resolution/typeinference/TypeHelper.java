@@ -41,6 +41,10 @@ public class TypeHelper {
         if (type.isPrimitive()) {
             return true;
         }
+        if (type.isTypeVariable()) {
+            // FIXME I am not sure...
+            return false;
+        }
         throw new UnsupportedOperationException(type.toString());
     }
 

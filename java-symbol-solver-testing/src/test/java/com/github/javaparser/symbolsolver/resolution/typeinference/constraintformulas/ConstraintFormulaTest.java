@@ -39,11 +39,11 @@ public class ConstraintFormulaTest {
 
         ConstraintFormula.ReductionResult res1 = formula.reduce(BoundSet.empty());
         assertEquals(
-                ConstraintFormula.ReductionResult.empty().withConstraint(new TypeCompatibleWithType(stringType, inferenceVariable)),
+                ConstraintFormula.ReductionResult.empty().withConstraint(new TypeCompatibleWithType(typeSolver, stringType, inferenceVariable)),
                 res1);
 
         assertEquals(
-                ConstraintFormula.ReductionResult.empty().withConstraint(new TypeSubtypeOfType(stringType, inferenceVariable)),
+                ConstraintFormula.ReductionResult.empty().withConstraint(new TypeSubtypeOfType(typeSolver, stringType, inferenceVariable)),
                 res1.getConstraint(0).reduce(BoundSet.empty()));
     }
 

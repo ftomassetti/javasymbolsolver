@@ -1,5 +1,6 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference.constraintformulas;
 
+import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.model.typesystem.ReferenceTypeImpl;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.resolution.typeinference.BoundSet;
@@ -16,8 +17,10 @@ import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHe
 public class TypeCompatibleWithType extends ConstraintFormula {
     private Type s;
     private Type t;
+    private TypeSolver typeSolver;
 
-    public TypeCompatibleWithType(Type s, Type t) {
+    public TypeCompatibleWithType(TypeSolver typeSolver, Type s, Type t) {
+        this.typeSolver = typeSolver;
         this.s = s;
         this.t = t;
     }
@@ -41,7 +44,7 @@ public class TypeCompatibleWithType extends ConstraintFormula {
         if (s.isPrimitive()) {
             ReflectionTypeSolver typeSolver = new ReflectionTypeSolver();
             Type sFirst = new ReferenceTypeImpl(typeSolver.solveType(s.asPrimitive().getBoxTypeQName()), typeSolver);
-            return ReductionResult.oneConstraint(new TypeCompatibleWithType(sFirst, t));
+            return ReductionResult.oneConstraint(new TypeCompatibleWithType(typeSolver, sFirst, t));
         }
 
         // 3. Otherwise, if T is a primitive type, let T' be the result of applying boxing conversion (§5.1.7) to T. Then the constraint reduces to ‹S = T'›.
@@ -85,7 +88,7 @@ public class TypeCompatibleWithType extends ConstraintFormula {
 
         // 6. Otherwise, the constraint reduces to ‹S <: T›
 
-        return ReductionResult.empty().withConstraint(new TypeSubtypeOfType(s, t));
+        return ReductionResult.empty().withConstraint(new TypeSubtypeOfType(typeSolver, s, t));
     }
 
     @Override
