@@ -161,8 +161,13 @@ public class TypeInference {
             return false;
         }
 
-        InstantiationSet instantiation = B2.performResolution();
-        return instantiation.allInferenceVariablesAreResolved(B2);
+        Optional<InstantiationSet> instantiation = B2.performResolution(alphas);
+        if (instantiation.isPresent()) {
+            //return instantiation.get().allInferenceVariablesAreResolved(B2);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private boolean isImplicitlyTyped(LambdaExpr lambdaExpr) {

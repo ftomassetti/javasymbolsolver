@@ -9,11 +9,9 @@ import com.github.javaparser.symbolsolver.resolution.typeinference.bounds.Subtyp
 import com.github.javaparser.symbolsolver.resolution.typeinference.constraintformulas.TypeSameAsType;
 import com.github.javaparser.symbolsolver.resolution.typeinference.constraintformulas.TypeSubtypeOfType;
 import com.github.javaparser.utils.Pair;
+import com.sun.tools.javac.comp.Infer;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -407,16 +405,71 @@ public class BoundSet {
         return bounds.stream().anyMatch(it -> it instanceof FalseBound);
     }
 
+    private class VariableDependency {
+        private InferenceVariable depending;
+        private InferenceVariable dependedOn;
+
+        public VariableDependency(InferenceVariable depending, InferenceVariable dependedOn) {
+            this.depending = depending;
+            this.dependedOn = dependedOn;
+        }
+
+        public InferenceVariable getDepending() {
+            return depending;
+        }
+
+        public InferenceVariable getDependedOn() {
+            return dependedOn;
+        }
+    }
+
+    private Set<InferenceVariable> allInferenceVariables() {
+        Set<InferenceVariable> variables = new HashSet<>();
+        for (Bound b : bounds) {
+            variables.addAll(b.usedInferenceVariables());
+        }
+        return variables;
+    }
+
+    private boolean hasInstantiationFor(InferenceVariable v) {
+        for (Bound b : bounds) {
+            if (b.isAnInstantiationFor(v)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Instantiation getInstantiationFor(InferenceVariable v) {
+        for (Bound b : bounds) {
+            if (b.isAnInstantiationFor(v)) {
+                return b.isAnInstantiation().get();
+            }
+        }
+        throw new IllegalArgumentException();
+    }
+
     /**
      * Examines the bounds on an inference variable and determines an instantiation that is compatible with those
      * bounds. It also decides the order in which interdependent inference variables are to be resolved.
      */
-    public InstantiationSet performResolution() {
-        // Given a bound set that does not contain the bound false, a subset of the inference variables mentioned by the bound set may be resolved. This means that a satisfactory instantiation may be added to the set for each inference variable, until all the requested variables have instantiations.
+    public Optional<InstantiationSet> performResolution(List<InferenceVariable> variablesToResolve) {
+
+        if (this.containsFalse()) {
+            return Optional.empty();
+        }
+
+        List<VariableDependency> dependencies = new LinkedList<>();
+
+        // Given a bound set that does not contain the bound false, a subset of the inference variables mentioned by
+        // the bound set may be resolved. This means that a satisfactory instantiation may be added to the set for each
+        // inference variable, until all the requested variables have instantiations.
         //
-        // Dependencies in the bound set may require that the variables be resolved in a particular order, or that additional variables be resolved. Dependencies are specified as follows:
+        // Dependencies in the bound set may require that the variables be resolved in a particular order, or that
+        // additional variables be resolved. Dependencies are specified as follows:
         //
-        // - Given a bound of one of the following forms, where T is either an inference variable β or a type that mentions β:
+        // - Given a bound of one of the following forms, where T is either an inference variable β or a type that
+        // mentions β:
         //
         //   - α = T
         //
@@ -426,33 +479,94 @@ public class BoundSet {
         //
         //   - T <: α
         //
-        //   If α appears on the left-hand side of another bound of the form G<..., α, ...> = capture(G<...>), then β depends on the resolution of α. Otherwise, α depends on the resolution of β.
-        //
-        // - An inference variable α appearing on the left-hand side of a bound of the form G<..., α, ...> = capture(G<...>) depends on the resolution of every other inference variable mentioned in this bound (on both sides of the = sign).
-        //
-        // - An inference variable α depends on the resolution of an inference variable β if there exists an inference variable γ such that α depends on the resolution of γ and γ depends on the resolution of β.
-        //
+        //   If α appears on the left-hand side of another bound of the form G<..., α, ...> = capture(G<...>), then β
+        //   depends on the resolution of α. Otherwise, α depends on the resolution of β.
+
+        for (Bound b : bounds) {
+            if (b instanceof CapturesBound) {
+                throw new UnsupportedOperationException();
+            }
+        }
+
+        // - An inference variable α appearing on the left-hand side of a bound of the form
+        //   G<..., α, ...> = capture(G<...>) depends on the resolution of every other inference variable mentioned in
+        //   this bound (on both sides of the = sign).
+
+        for (Bound b : bounds) {
+            if (b instanceof CapturesBound) {
+                throw new UnsupportedOperationException();
+            }
+        }
+
+        // - An inference variable α depends on the resolution of an inference variable β if there exists an inference
+        //   variable γ such that α depends on the resolution of γ and γ depends on the resolution of β.
+
+        for (int i=0;i<dependencies.size();i++) {
+            VariableDependency di = dependencies.get(i);
+            for (int j=i+1;j<dependencies.size();j++) {
+                VariableDependency dj = dependencies.get(j);
+                if (di.dependedOn.equals(dj.depending)) {
+                    dependencies.add(new VariableDependency(di.getDepending(), dj.getDependedOn()));
+                }
+            }
+        }
+
         // - An inference variable α depends on the resolution of itself.
-        //
-        // Given a set of inference variables to resolve, let V be the union of this set and all variables upon which the resolution of at least one variable in this set depends.
-        //
+
+        for (InferenceVariable v : allInferenceVariables()) {
+            dependencies.add(new VariableDependency(v, v));
+        }
+
+        // Given a set of inference variables to resolve, let V be the union of this set and all variables upon which
+        // the resolution of at least one variable in this set depends.
+
+        Set<InferenceVariable> V = new HashSet<>();
+        V.addAll(variablesToResolve);
+        for (VariableDependency dependency : dependencies) {
+            if (variablesToResolve.contains(dependency.depending)) {
+                V.add(dependency.dependedOn);
+            }
+        }
+
         // If every variable in V has an instantiation, then resolution succeeds and this procedure terminates.
+
+        boolean ok = true;
+        for (InferenceVariable v : V) {
+            if (!hasInstantiationFor(v)) {
+                ok = false;
+            }
+        }
+        if (ok) {
+            InstantiationSet instantiationSet = InstantiationSet.empty();
+            for (InferenceVariable v : V) {
+                instantiationSet = instantiationSet.withInstantiation(getInstantiationFor(v));
+            }
+            return Optional.of(instantiationSet);
+        }
+
+        // Otherwise, let { α1, ..., αn } be a non-empty subset of uninstantiated variables in V such that i)
+        // for all i (1 ≤ i ≤ n), if αi depends on the resolution of a variable β, then either β has an instantiation
+        // or there is some j such that β = αj; and ii) there exists no non-empty proper subset of { α1, ..., αn }
+        // with this property. Resolution proceeds by generating an instantiation for each of α1, ..., αn based on the
+        // bounds in the bound set:
         //
-        // Otherwise, let { α1, ..., αn } be a non-empty subset of uninstantiated variables in V such that i) for all i (1 ≤ i ≤ n), if αi depends on the resolution of a variable β, then either β has an instantiation or there is some j such that β = αj; and ii) there exists no non-empty proper subset of { α1, ..., αn } with this property. Resolution proceeds by generating an instantiation for each of α1, ..., αn based on the bounds in the bound set:
-        //
-        // - If the bound set does not contain a bound of the form G<..., αi, ...> = capture(G<...>) for all i (1 ≤ i ≤ n), then a candidate instantiation Ti is defined for each αi:
+        // - If the bound set does not contain a bound of the form G<..., αi, ...> = capture(G<...>)
+        //   for all i (1 ≤ i ≤ n), then a candidate instantiation Ti is defined for each αi:
         //
         //   - If αi has one or more proper lower bounds, L1, ..., Lk, then Ti = lub(L1, ..., Lk) (§4.10.4).
         //
-        //   - Otherwise, if the bound set contains throws αi, and the proper upper bounds of αi are, at most, Exception, Throwable, and Object, then Ti = RuntimeException.
+        //   - Otherwise, if the bound set contains throws αi, and the proper upper bounds of αi are, at most,
+        //     Exception, Throwable, and Object, then Ti = RuntimeException.
         //
         //   - Otherwise, where αi has proper upper bounds U1, ..., Uk, Ti = glb(U1, ..., Uk) (§5.1.10).
         //
         //   The bounds α1 = T1, ..., αn = Tn are incorporated with the current bound set.
         //
-        //   If the result does not contain the bound false, then the result becomes the new bound set, and resolution proceeds by selecting a new set of variables to instantiate (if necessary), as described above.
+        //   If the result does not contain the bound false, then the result becomes the new bound set, and resolution
+        //   proceeds by selecting a new set of variables to instantiate (if necessary), as described above.
         //
-        //   Otherwise, the result contains the bound false, so a second attempt is made to instantiate { α1, ..., αn } by performing the step below.
+        //   Otherwise, the result contains the bound false, so a second attempt is made to instantiate { α1, ..., αn }
+        //   by performing the step below.
         //
         // - If the bound set contains a bound of the form G<..., αi, ...> = capture(G<...>) for some i (1 ≤ i ≤ n), or;
         //
@@ -460,15 +574,20 @@ public class BoundSet {
         //
         //   then let Y1, ..., Yn be fresh type variables whose bounds are as follows:
         //
-        //   - For all i (1 ≤ i ≤ n), if αi has one or more proper lower bounds L1, ..., Lk, then let the lower bound of Yi be lub(L1, ..., Lk); if not, then Yi has no lower bound.
+        //   - For all i (1 ≤ i ≤ n), if αi has one or more proper lower bounds L1, ..., Lk, then let the lower bound
+        //     of Yi be lub(L1, ..., Lk); if not, then Yi has no lower bound.
         //
-        //   - For all i (1 ≤ i ≤ n), where αi has upper bounds U1, ..., Uk, let the upper bound of Yi be glb(U1 θ, ..., Uk θ), where θ is the substitution [α1:=Y1, ..., αn:=Yn].
+        //   - For all i (1 ≤ i ≤ n), where αi has upper bounds U1, ..., Uk, let the upper bound of Yi be
+        //     glb(U1 θ, ..., Uk θ), where θ is the substitution [α1:=Y1, ..., αn:=Yn].
         //
-        //   If the type variables Y1, ..., Yn do not have well-formed bounds (that is, a lower bound is not a subtype of an upper bound, or an intersection type is inconsistent), then resolution fails.
+        //   If the type variables Y1, ..., Yn do not have well-formed bounds (that is, a lower bound is not a subtype
+        //   of an upper bound, or an intersection type is inconsistent), then resolution fails.
         //
-        //   Otherwise, for all i (1 ≤ i ≤ n), all bounds of the form G<..., αi, ...> = capture(G<...>) are removed from the current bound set, and the bounds α1 = Y1, ..., αn = Yn are incorporated.
+        //   Otherwise, for all i (1 ≤ i ≤ n), all bounds of the form G<..., αi, ...> = capture(G<...>) are removed
+        //   from the current bound set, and the bounds α1 = Y1, ..., αn = Yn are incorporated.
         //
-        //   If the result does not contain the bound false, then the result becomes the new bound set, and resolution proceeds by selecting a new set of variables to instantiate (if necessary), as described above.
+        //   If the result does not contain the bound false, then the result becomes the new bound set, and resolution
+        //   proceeds by selecting a new set of variables to instantiate (if necessary), as described above.
         //
         //   Otherwise, the result contains the bound false, and resolution fails.
 

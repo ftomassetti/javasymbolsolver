@@ -3,8 +3,11 @@ package com.github.javaparser.symbolsolver.resolution.typeinference;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.resolution.typeinference.bounds.FalseBound;
 import com.github.javaparser.utils.Pair;
+import com.sun.tools.javac.comp.Infer;
 
+import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 public abstract class Bound {
 
@@ -28,6 +31,10 @@ public abstract class Bound {
      */
     public Optional<Instantiation> isAnInstantiation() {
         return Optional.empty();
+    }
+
+    public boolean isAnInstantiationFor(InferenceVariable v) {
+        return isAnInstantiation().isPresent() && isAnInstantiation().get().getInferenceVariable().equals(v);
     }
 
     /**
@@ -58,4 +65,5 @@ public abstract class Bound {
         return false;
     }
 
+    public abstract Set<InferenceVariable> usedInferenceVariables();
 }
