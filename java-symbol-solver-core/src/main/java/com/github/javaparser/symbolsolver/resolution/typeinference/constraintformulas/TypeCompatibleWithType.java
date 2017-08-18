@@ -56,10 +56,25 @@ public class TypeCompatibleWithType extends ConstraintFormula {
         // unchecked conversion in the first case, may result in compile-time unchecked warnings, and may influence a
         // method's invocation type (§15.12.2.6).
 
-        // 4. Otherwise, if T is a parameterized type of the form G<T1, ..., Tn>, and there exists no type of the form G<...> that is a supertype of S, but the raw type G is a supertype of S, then the constraint reduces to true.
+        // 4. Otherwise, if T is a parameterized type of the form G<T1, ..., Tn>, and there exists no type of the
+        //    form G<...> that is a supertype of S, but the raw type G is a supertype of S, then the constraint reduces
+        //    to true.
 
         if (t.isReferenceType() && !t.asReferenceType().getTypeDeclaration().getTypeParameters().isEmpty()) {
-            throw new UnsupportedOperationException();
+            // FIXME I really cannot understand what the specification means...
+
+            // there exists a type of the form G<...> that is a supertype of S?
+            boolean condition1 = t.isAssignableBy(s);
+
+            // the raw type G is a supertype of S
+            Type G = t.asReferenceType().toRawType();
+            boolean condition2 = G.isAssignableBy(s);
+
+            if (!condition1 && condition2) {
+                return ReductionResult.trueResult();
+            }
+
+            //throw new UnsupportedOperationException();
         }
 
         // 5. Otherwise, if T is an array type of the form G<T1, ..., Tn>[]k, and there exists no type of the form G<...>[]k that is a supertype of S, but the raw type G[]k is a supertype of S, then the constraint reduces to true. (The notation []k indicates an array type of k dimensions.)
