@@ -13,4 +13,17 @@ import java.util.List;
 public class CapturesBound extends Bound {
     private List<InferenceVariable> inferenceVariables;
     private List<Type> typesOrWildcards;
+
+    public CapturesBound(List<InferenceVariable> inferenceVariables, List<Type> typesOrWildcards) {
+        this.inferenceVariables = inferenceVariables;
+        this.typesOrWildcards = typesOrWildcards;
+    }
+
+    public List<InferenceVariable> getInferenceVariables() {
+        return inferenceVariables;
+    }
+
+    public List<Type> getTypesOrWildcards() {
+        return typesOrWildcards;
+    }
 }

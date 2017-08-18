@@ -113,7 +113,9 @@ public class TypeHelper {
             return true;
         }
 
-        throw new UnsupportedOperationException("isCompatibleInALooseInvocationContext unable to decide on s=" + s + ", t=" + t);
+        //throw new UnsupportedOperationException("isCompatibleInALooseInvocationContext unable to decide on s=" + s + ", t=" + t);
+        // TODO FIXME
+        return t.isAssignableBy(s);
     }
 
     private static Type toUnboxedType(ReferenceType referenceType) {
