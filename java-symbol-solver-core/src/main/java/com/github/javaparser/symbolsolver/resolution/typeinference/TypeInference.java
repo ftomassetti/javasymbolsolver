@@ -19,8 +19,14 @@ import java.util.Optional;
 
 import static com.github.javaparser.symbolsolver.resolution.typeinference.ExpressionHelper.isStandaloneExpression;
 
+/**
+ * The API exposed by the TypeInference subsystem.
+ */
 public class TypeInference {
 
+    private final Type object;
+    private TypeSolver typeSolver;
+    
     public TypeInference(TypeSolver typeSolver) {
         if (typeSolver == null) {
             throw new NullPointerException();
@@ -29,9 +35,14 @@ public class TypeInference {
         this.object = new ReferenceTypeImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver);
     }
 
-    private TypeSolver typeSolver;
-    private final Type object;
-
+    /**
+     * When inference begins, a bound set is typically generated from a list of type parameter declarations P1, ..., Pp
+     * and associated inference variables α1, ..., αp
+     *
+     * @param typeParameterDeclarations
+     * @param inferenceVariables
+     * @return
+     */
     private BoundSet boundSetup(List<TypeParameterDeclaration> typeParameterDeclarations, List<InferenceVariable> inferenceVariables) {
         if (typeParameterDeclarations.size() != inferenceVariables.size()) {
             throw new IllegalArgumentException();

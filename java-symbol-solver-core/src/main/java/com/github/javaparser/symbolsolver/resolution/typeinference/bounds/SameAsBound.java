@@ -14,6 +14,8 @@ import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHe
 
 /**
  * S = T, where at least one of S or T is an inference variable: S is the same as T.
+ *
+ * @author Federico Tomassetti
  */
 public class SameAsBound extends Bound {
     private Type s;

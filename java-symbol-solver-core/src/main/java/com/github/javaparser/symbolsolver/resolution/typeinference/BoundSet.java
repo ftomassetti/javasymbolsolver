@@ -9,7 +9,6 @@ import com.github.javaparser.symbolsolver.resolution.typeinference.bounds.Subtyp
 import com.github.javaparser.symbolsolver.resolution.typeinference.constraintformulas.TypeSameAsType;
 import com.github.javaparser.symbolsolver.resolution.typeinference.constraintformulas.TypeSubtypeOfType;
 import com.github.javaparser.utils.Pair;
-import com.sun.tools.javac.comp.Infer;
 
 import java.util.*;
 import java.util.function.Predicate;
