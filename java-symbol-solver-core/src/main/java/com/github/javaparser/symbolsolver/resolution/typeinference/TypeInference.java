@@ -6,6 +6,7 @@ import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import com.github.javaparser.symbolsolver.model.declarations.InterfaceDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.MethodDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.TypeParameterDeclaration;
+import com.github.javaparser.symbolsolver.model.methods.MethodUsage;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.model.typesystem.ReferenceTypeImpl;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
@@ -26,7 +27,7 @@ public class TypeInference {
 
     private final Type object;
     private TypeSolver typeSolver;
-    
+
     public TypeInference(TypeSolver typeSolver) {
         if (typeSolver == null) {
             throw new NullPointerException();
@@ -588,6 +589,10 @@ public class TypeInference {
         //
         //   Otherwise, m1 is not more specific than m2.
 
+        throw new UnsupportedOperationException();
+    }
+
+    public static MethodUsage toMethodUsage(MethodCallExpr call, MethodDeclaration correspondingDeclaration, TypeSolver typeSolver) {
         throw new UnsupportedOperationException();
     }
 }

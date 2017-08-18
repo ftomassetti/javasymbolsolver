@@ -575,19 +575,31 @@ public class MethodResolutionLogic {
         return true;
     }
 
+    @Deprecated
     public static SymbolReference<MethodDeclaration> solveMethodInType(TypeDeclaration typeDeclaration, String name, List<Type> argumentsTypes, TypeSolver typeSolver) {
         return solveMethodInType(typeDeclaration, name, argumentsTypes, false, typeSolver);
     }
 
-        /**
-         * Replace TypeDeclaration.solveMethod
-         *
-         * @param typeDeclaration
-         * @param name
-         * @param argumentsTypes
-         * @param staticOnly
-         * @return
-         */
+    public static SymbolReference<MethodDeclaration> solveMethodInTypeUsingTypeInference(TypeDeclaration typeDeclaration, MethodCallExpr call, TypeSolver typeSolver) {
+        return solveMethodInTypeUsingTypeInference(typeDeclaration, call, false, typeSolver);
+    }
+
+    public static SymbolReference<MethodDeclaration> solveMethodInTypeUsingTypeInference(TypeDeclaration typeDeclaration,
+                                                                                         MethodCallExpr call, boolean staticOnly,
+                                                                                         TypeSolver typeSolver) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Replace TypeDeclaration.solveMethod
+     *
+     * @param typeDeclaration
+     * @param name
+     * @param argumentsTypes
+     * @param staticOnly
+     * @return
+     */
+    @Deprecated
     public static SymbolReference<MethodDeclaration> solveMethodInType(TypeDeclaration typeDeclaration,
                                                                        String name, List<Type> argumentsTypes, boolean staticOnly,
                                                                        TypeSolver typeSolver) {
@@ -686,6 +698,5 @@ public class MethodResolutionLogic {
             return;
         }
     }
-
 
 }
