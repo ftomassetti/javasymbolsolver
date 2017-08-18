@@ -34,7 +34,7 @@ import com.github.javaparser.symbolsolver.model.typesystem.*;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionClassDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionEnumDeclaration;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionInterfaceDeclaration;
-import com.github.javaparser.symbolsolver.resolution.typeinference.TypeInferenceAPI;
+import com.github.javaparser.symbolsolver.resolution.typeinference.TypeInference;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -265,8 +265,8 @@ public class MethodResolutionLogic {
     }
 
     public static boolean isApplicableUsingTypeInference(MethodDeclaration method, MethodCallExpr methodCallExpr, TypeSolver typeSolver) {
-        TypeInferenceAPI typeInferenceAPI = new TypeInferenceAPI(typeSolver);
-        return typeInferenceAPI.invocationApplicabilityInference(methodCallExpr, method);
+        TypeInference typeInference = new TypeInference(typeSolver);
+        return typeInference.invocationApplicabilityInference(methodCallExpr, method);
     }
 
     public static boolean isApplicable(MethodUsage method, String name, List<Type> argumentsTypes, TypeSolver typeSolver) {

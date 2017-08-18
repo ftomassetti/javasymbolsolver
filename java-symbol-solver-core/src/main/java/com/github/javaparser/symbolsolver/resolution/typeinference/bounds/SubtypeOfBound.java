@@ -19,6 +19,14 @@ public class SubtypeOfBound extends Bound {
     private Type s;
     private Type t;
 
+    public Type getS() {
+        return s;
+    }
+
+    public Type getT() {
+        return t;
+    }
+
     public SubtypeOfBound(Type s, Type t) {
         if (!isInferenceVariable(s) && !isInferenceVariable(t)) {
             throw new IllegalArgumentException("One of S or T should be an inference variable");
