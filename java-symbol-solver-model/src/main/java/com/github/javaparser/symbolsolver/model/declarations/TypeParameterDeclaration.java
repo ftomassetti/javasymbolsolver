@@ -165,6 +165,24 @@ public interface TypeParameterDeclaration extends TypeDeclaration {
      */
     List<Bound> getBounds(TypeSolver typeSolver);
 
+    default boolean hasLowerBound(TypeSolver typeSolver) {
+        for (Bound b : getBounds(typeSolver)) {
+            if (b.isExtends()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    default Type getLowerBound(TypeSolver typeSolver) {
+        for (Bound b : getBounds(typeSolver)) {
+            if (b.isExtends()) {
+                return b.getType();
+            }
+        }
+        throw new IllegalStateException();
+    }
+
     /**
      * A Bound on a Type Parameter.
      */

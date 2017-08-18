@@ -17,6 +17,7 @@
 package com.github.javaparser.symbolsolver.reflectionmodel;
 
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.core.resolution.Context;
 import com.github.javaparser.symbolsolver.javaparsermodel.LambdaArgumentTypePlaceholder;
 import com.github.javaparser.symbolsolver.logic.AbstractTypeDeclaration;
@@ -131,6 +132,7 @@ public class ReflectionInterfaceDeclaration extends AbstractTypeDeclaration impl
         return clazz.hashCode();
     }
 
+    @Deprecated
     public Optional<MethodUsage> solveMethodAsUsage(String name, List<Type> parameterTypes, TypeSolver typeSolver, Context invokationContext, List<Type> typeParameterValues) {
         Optional<MethodUsage> res = ReflectionMethodResolutionLogic.solveMethodAsUsage(name, parameterTypes, typeSolver, invokationContext,
                 typeParameterValues, this, clazz);
@@ -157,6 +159,38 @@ public class ReflectionInterfaceDeclaration extends AbstractTypeDeclaration impl
             } catch (ConfilictingGenericTypesException e) {
                 return Optional.empty();
             }
+        } else {
+            return res;
+        }
+    }
+
+    public Optional<MethodUsage> solveMethodAsUsageUsingTypeInference(MethodCallExpr methodCall, TypeSolver typeSolver, Context invokationContext, List<Type> typeParameterValues) {
+        Optional<MethodUsage> res = ReflectionMethodResolutionLogic.solveMethodAsUsageUsingTypeInference(methodCall, typeSolver, invokationContext,
+                typeParameterValues, this, clazz);
+        if (res.isPresent()) {
+//            // We have to replace method type typeParametersValues here
+//            InferenceContext inferenceContext = new InferenceContext(MyObjectProvider.INSTANCE);
+//            MethodUsage methodUsage = res.get();
+//            int i = 0;
+//            List<Type> parameters = new LinkedList<>();
+//            for (Type actualType : parameterTypes) {
+//                Type formalType = methodUsage.getParamType(i);
+//                // We need to replace the class type typeParametersValues (while we derive the method ones)
+//
+//                parameters.add(inferenceContext.addPair(formalType, actualType));
+//                i++;
+//            }
+//            try {
+//                Type returnType = inferenceContext.addSingle(methodUsage.returnType());
+//                for (int j=0;j<parameters.size();j++) {
+//                    methodUsage = methodUsage.replaceParamType(j, inferenceContext.resolve(parameters.get(j)));
+//                }
+//                methodUsage = methodUsage.replaceReturnType(inferenceContext.resolve(returnType));
+//                return Optional.of(methodUsage);
+//            } catch (ConfilictingGenericTypesException e) {
+//                return Optional.empty();
+//            }
+            return res;
         } else {
             return res;
         }
