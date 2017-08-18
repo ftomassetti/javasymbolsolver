@@ -484,6 +484,17 @@ public class JavaParserFacade {
         return convertToUsage(type, context);
     }
 
+    public MethodUsage solveMethodAsUsageUsingTypeInference(MethodCallExpr call) {
+        Context context = JavaParserFactory.getContext(call, typeSolver);
+        Optional<MethodUsage> methodUsage = context.solveMethodAsUsageUsingTypeInference(call, typeSolver);
+        if (!methodUsage.isPresent()) {
+            throw new RuntimeException("Method '" + call.getName() + "' cannot be resolved in context "
+                    + call + " (line: " + call.getRange().get().begin.line + ") " + context + ". Call: " + call);
+        }
+        return methodUsage.get();
+    }
+
+    @Deprecated
     public MethodUsage solveMethodAsUsage(MethodCallExpr call) {
         List<Type> params = new ArrayList<>();
         if (call.getArguments() != null) {

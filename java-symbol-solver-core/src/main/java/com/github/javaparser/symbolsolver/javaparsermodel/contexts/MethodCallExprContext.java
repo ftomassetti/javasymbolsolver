@@ -37,6 +37,7 @@ import com.github.javaparser.symbolsolver.model.typesystem.ReferenceType;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionClassDeclaration;
 import com.github.javaparser.symbolsolver.resolution.MethodResolutionLogic;
+import com.github.javaparser.symbolsolver.resolution.typeinference.TypeInference;
 import javaslang.Tuple2;
 
 import java.util.ArrayList;
@@ -73,6 +74,51 @@ public class MethodCallExprContext extends AbstractJavaParserContext<MethodCallE
     @Override
     public String toString() {
         return "MethodCallExprContext{wrapped=" + wrappedNode + "}";
+    }
+
+    @Override
+    public Optional<MethodUsage> solveMethodAsUsageUsingTypeInference(MethodCallExpr call, TypeSolver typeSolver) {
+        if (wrappedNode.getScope().isPresent()) {
+            Expression scope = wrappedNode.getScope().get();
+            // Consider static method calls
+            if (scope instanceof NameExpr) {
+                String className = ((NameExpr) scope).getName().getId();
+                SymbolReference<TypeDeclaration> ref = solveType(className, typeSolver);
+                if (ref.isSolved()) {
+                    SymbolReference<MethodDeclaration> m = MethodResolutionLogic.solveMethodInTypeUsingTypeInference(ref.getCorrespondingDeclaration(), call, typeSolver);
+                    if (m.isSolved()) {
+                        return Optional.of(TypeInference.toMethodUsage(call, m.getCorrespondingDeclaration(), typeSolver));
+                    } else {
+                        throw new UnsolvedSymbolException(ref.getCorrespondingDeclaration().toString(),
+                                "Method '" + call.getNameAsString() + "' with call " + call);
+                    }
+                }
+            }
+
+            Type typeOfScope = JavaParserFacade.get(typeSolver).getType(scope);
+            // we can replace the parameter types from the scope into the typeParametersValues
+
+//            Map<TypeParameterDeclaration, Type> inferredTypes = new HashMap<>();
+//            for (int i = 0; i < argumentsTypes.size(); i++) {
+//                // by replacing types I can also find new equivalences
+//                // for example if I replace T=U with String because I know that T=String I can derive that also U equal String
+//                Type originalArgumentType = argumentsTypes.get(i);
+//                Type updatedArgumentType = usingParameterTypesFromScope(typeOfScope, originalArgumentType, inferredTypes);
+//                argumentsTypes.set(i, updatedArgumentType);
+//            }
+//            for (int i = 0; i < argumentsTypes.size(); i++) {
+//                Type updatedArgumentType = applyInferredTypes(argumentsTypes.get(i), inferredTypes);
+//                argumentsTypes.set(i, updatedArgumentType);
+//            }
+
+            return solveMethodAsUsageUsingTypeInference(typeOfScope.asReferenceType(), call, typeSolver, this);
+        } else {
+            Context parentContext = getParent();
+            while (parentContext instanceof MethodCallExprContext) {
+                parentContext = parentContext.getParent();
+            }
+            return parentContext.solveMethodAsUsageUsingTypeInference(call, typeSolver);
+        }
     }
 
     @Override
@@ -205,6 +251,13 @@ public class MethodCallExprContext extends AbstractJavaParserContext<MethodCallE
     /// Private methods
     ///
 
+    private Optional<MethodUsage> solveMethodAsUsageUsingTypeInference(ReferenceType refType, MethodCallExpr methodCallExpr,
+                                                     TypeSolver typeSolver,
+                                                     Context invokationContext) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Deprecated
     private Optional<MethodUsage> solveMethodAsUsage(ReferenceType refType, String name,
                                                      List<Type> argumentsTypes, TypeSolver typeSolver,
                                                      Context invokationContext) {

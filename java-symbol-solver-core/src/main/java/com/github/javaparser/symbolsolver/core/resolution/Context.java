@@ -16,6 +16,7 @@
 
 package com.github.javaparser.symbolsolver.core.resolution;
 
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.model.declarations.*;
 import com.github.javaparser.symbolsolver.model.methods.MethodUsage;
 import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
@@ -94,5 +95,9 @@ public interface Context {
         } else {
             return Optional.empty();
         }
+    }
+
+    default Optional<MethodUsage> solveMethodAsUsageUsingTypeInference(MethodCallExpr call, TypeSolver typeSolver) {
+        throw new UnsupportedOperationException("Not implemented for " + this.getClass().getCanonicalName());
     }
 }
