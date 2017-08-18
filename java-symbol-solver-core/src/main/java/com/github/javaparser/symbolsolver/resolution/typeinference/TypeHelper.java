@@ -8,7 +8,7 @@ import com.github.javaparser.symbolsolver.model.typesystem.ReferenceType;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.model.typesystem.Wildcard;
 
-import java.util.Optional;
+import java.util.*;
 
 /**
  * The term "type" is used loosely in this chapter to include type-like syntax that contains inference variables.
@@ -140,5 +140,12 @@ public class TypeHelper {
 
     public static boolean isInferenceVariable(Type type) {
         return type instanceof InferenceVariable;
+    }
+
+    public static Set<InferenceVariable> usedInferenceVariables(Type type) {
+        if (isInferenceVariable(type)) {
+            return new HashSet<>(Arrays.asList((InferenceVariable)type));
+        }
+        throw new UnsupportedOperationException();
     }
 }
