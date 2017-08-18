@@ -17,7 +17,7 @@ public class Substitution {
         return EMPTY;
     }
 
-    public Substitution addPair(TypeParameterDeclaration typeParameterDeclaration, Type type) {
+    public Substitution withPair(TypeParameterDeclaration typeParameterDeclaration, Type type) {
         Substitution newInstance = new Substitution();
         newInstance.typeParameterDeclarations.addAll(this.typeParameterDeclarations);
         newInstance.types.addAll(this.types);

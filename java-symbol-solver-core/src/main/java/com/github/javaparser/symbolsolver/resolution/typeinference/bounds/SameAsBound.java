@@ -18,6 +18,14 @@ public class SameAsBound extends Bound {
     private Type s;
     private Type t;
 
+    public Type getS() {
+        return s;
+    }
+
+    public Type getT() {
+        return t;
+    }
+
     @Override
     public boolean isADependency() {
         return !isAnInstantiation().isPresent();

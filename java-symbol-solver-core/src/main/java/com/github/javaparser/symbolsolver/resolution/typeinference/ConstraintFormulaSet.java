@@ -6,7 +6,7 @@ import java.util.List;
 public class ConstraintFormulaSet {
     private List<ConstraintFormula> constraintFormulas;
 
-    public ConstraintFormulaSet addConstraint(ConstraintFormula constraintFormula) {
+    public ConstraintFormulaSet withConstraint(ConstraintFormula constraintFormula) {
         ConstraintFormulaSet newInstance = new ConstraintFormulaSet();
         newInstance.constraintFormulas.addAll(this.constraintFormulas);
         newInstance.constraintFormulas.add(constraintFormula);
@@ -40,5 +40,9 @@ public class ConstraintFormulaSet {
             boundSet.incorporate(reductionResult.getBoundSet());
         }
         return boundSet;
+    }
+
+    public boolean isEmpty() {
+        return constraintFormulas.isEmpty();
     }
 }
