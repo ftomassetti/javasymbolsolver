@@ -72,18 +72,24 @@ public class MethodsResolutionLogicUsingTypeInferenceTest extends AbstractResolu
 
     @Test
     public void compatibilityShouldConsiderAlsoTypeVariablesNegative() {
-        JavaParserClassDeclaration constructorDeclaration = (JavaParserClassDeclaration) typeSolver.solveType("com.github.javaparser.ast.body.ConstructorDeclaration");
+        JavaParserClassDeclaration constructorDeclaration = (JavaParserClassDeclaration) typeSolver
+                .solveType("com.github.javaparser.ast.body.ConstructorDeclaration");
 
         ReferenceType stringType = (ReferenceType) ReflectionFactory.typeUsageFor(String.class, typeSolver);
         ReferenceType rawClassType = (ReferenceType) ReflectionFactory.typeUsageFor(Class.class, typeSolver);
         assertEquals(true, rawClassType.isRawType());
-        ReferenceType classOfStringType = (ReferenceType) rawClassType.replaceTypeVariables(rawClassType.getTypeDeclaration().getTypeParameters().get(0), stringType);
-        MethodUsage mu = constructorDeclaration.getAllMethods().stream().filter(m -> m.getDeclaration().getSignature().equals("isThrows(java.lang.Class<? extends java.lang.Throwable>)")).findFirst().get();
+        ReferenceType classOfStringType = (ReferenceType) rawClassType
+                .replaceTypeVariables(rawClassType.getTypeDeclaration().getTypeParameters().get(0), stringType);
+        MethodUsage mu = constructorDeclaration.getAllMethods().stream()
+                .filter(m -> m.getDeclaration().getSignature()
+                        .equals("isThrows(java.lang.Class<? extends java.lang.Throwable>)"))
+                .findFirst().get();
 
         MethodCallExpr methodCallExpr = new MethodCallExpr(null, "isThrows");
         methodCallExpr.addArgument("\"AString\"");
 
-        assertEquals(false, MethodResolutionLogic.isApplicableUsingTypeInference(mu.getDeclaration(), methodCallExpr, typeSolver));
+        assertEquals(false,
+                MethodResolutionLogic.isApplicableUsingTypeInference(mu.getDeclaration(), methodCallExpr, typeSolver));
     }
 
 }
