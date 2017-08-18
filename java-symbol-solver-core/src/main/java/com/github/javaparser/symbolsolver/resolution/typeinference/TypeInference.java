@@ -163,8 +163,8 @@ public class TypeInference {
 
         // - C is reduced (§18.2) and the resulting bounds are incorporated with B1 to produce a new bound set, B2.
 
-        BoundSet resultingBounds = C.get().reduce();
-        BoundSet B2 = B1.incorporate(resultingBounds);
+        BoundSet resultingBounds = C.get().reduce(typeSolver);
+        BoundSet B2 = B1.incorporate(resultingBounds, typeSolver);
 
         // - Finally, the method m is applicable if B2 does not contain the bound false and resolution of all the
         //   inference variables in B2 succeeds (§18.4).
@@ -511,7 +511,7 @@ public class TypeInference {
             //Type qi = JavaParserFacade.get(typeSolver).convertToUsage(interfaceDeclaration.getm.get(i).getType(), lambdaExpr);
             //constraintFormulaSet = constraintFormulaSet.withConstraint(new TypeSameAsType(pi, qi));
         }
-        BoundSet B = constraintFormulaSet.reduce();
+        BoundSet B = constraintFormulaSet.reduce(typeSolver);
 
         // If B contains the bound false, no valid parameterization exists. Otherwise, a new parameterization of the
         // functional interface type, F<A'1, ..., A'm>, is constructed as follows, for 1 ≤ i ≤ m:

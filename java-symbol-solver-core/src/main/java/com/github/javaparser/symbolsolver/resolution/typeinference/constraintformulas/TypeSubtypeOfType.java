@@ -1,5 +1,7 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference.constraintformulas;
 
+import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
+import com.github.javaparser.symbolsolver.model.typesystem.IntersectionType;
 import com.github.javaparser.symbolsolver.model.typesystem.NullType;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.resolution.typeinference.BoundSet;
@@ -16,8 +18,10 @@ import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHe
 public class TypeSubtypeOfType extends ConstraintFormula {
     private Type S;
     private Type T;
+    private TypeSolver typeSolver;
 
-    public TypeSubtypeOfType(Type S, Type T) {
+    public TypeSubtypeOfType(TypeSolver typeSolver, Type S, Type T) {
+        this.typeSolver = typeSolver;
         this.S = S;
         this.T = T;
     }
@@ -69,17 +73,31 @@ public class TypeSubtypeOfType extends ConstraintFormula {
         //     - Otherwise, the constraint reduces to true if S' and T' are the same primitive type, and false otherwise.
         //
         //   - If T is a type variable, there are three cases:
-        //
-        //     - If S is an intersection type of which T is an element, the constraint reduces to true.
-        //
-        //     - Otherwise, if T has a lower bound, B, the constraint reduces to ‹S <: B›.
-        //
-        //     - Otherwise, the constraint reduces to false.
+
+        if (T.isTypeVariable()) {
+
+            //     - If S is an intersection type of which T is an element, the constraint reduces to true.
+
+            if (S instanceof IntersectionType) {
+                throw new UnsupportedOperationException();
+            }
+
+            //     - Otherwise, if T has a lower bound, B, the constraint reduces to ‹S <: B›.
+
+            if (T.asTypeVariable().asTypeParameter().hasLowerBound(typeSolver)) {
+                return ReductionResult.oneConstraint(new TypeSubtypeOfType(typeSolver, S, T.asTypeVariable().asTypeParameter().getLowerBound(typeSolver)));
+            }
+
+            //     - Otherwise, the constraint reduces to false.
+
+            return ReductionResult.falseResult();
+        }
+
         //
         //   - If T is an intersection type, I1 & ... & In, the constraint reduces to the following new constraints: for all i (1 ≤ i ≤ n), ‹S <: Ii›.
         //
 
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("S = "+ S + ", T = " + T);
     }
 
     @Override

@@ -178,15 +178,15 @@ public class BoundSet {
      * Because the bounds on one variable can sometimes impact the possible choices for another variable, this process
      * propagates bounds between such interdependent variables.
      */
-    public BoundSet incorporate(BoundSet otherBounds) {
+    public BoundSet incorporate(BoundSet otherBounds, TypeSolver typeSolver) {
         BoundSet newBoundSet = this;
         for (Bound b : otherBounds.bounds) {
             newBoundSet = newBoundSet.withBound(b);
         }
-        return newBoundSet.deriveImpliedBounds();
+        return newBoundSet.deriveImpliedBounds(typeSolver);
     }
 
-    public BoundSet deriveImpliedBounds() {
+    public BoundSet deriveImpliedBounds(TypeSolver typeSolver) {
         // As bound sets are constructed and grown during inference, it is possible that new bounds can be inferred
         // based on the assertions of the original bounds. The process of incorporation identifies these new bounds
         // and adds them to the bound set.
@@ -242,10 +242,10 @@ public class BoundSet {
 
         newConstraintsSet = forEachPairSameAndSubtype((a, b, currentConstraintSet) -> {
             if (areSameTypeInference(a.getS(), b.getS())) {
-                currentConstraintSet = currentConstraintSet.withConstraint(new TypeSubtypeOfType(a.getT(), b.getT()));
+                currentConstraintSet = currentConstraintSet.withConstraint(new TypeSubtypeOfType(typeSolver, a.getT(), b.getT()));
             }
             if (areSameTypeInference(a.getT(), b.getS())) {
-                currentConstraintSet = currentConstraintSet.withConstraint(new TypeSubtypeOfType(a.getS(), b.getT()));
+                currentConstraintSet = currentConstraintSet.withConstraint(new TypeSubtypeOfType(typeSolver, a.getS(), b.getT()));
             }
             return currentConstraintSet;
         }, newConstraintsSet);
@@ -254,10 +254,10 @@ public class BoundSet {
 
         newConstraintsSet = forEachPairSameAndSubtype((a, b, currentConstraintSet) -> {
             if (areSameTypeInference(a.getS(), b.getT())) {
-                currentConstraintSet = currentConstraintSet.withConstraint(new TypeSubtypeOfType(b.getS(), a.getT()));
+                currentConstraintSet = currentConstraintSet.withConstraint(new TypeSubtypeOfType(typeSolver, b.getS(), a.getT()));
             }
             if (areSameTypeInference(a.getT(), b.getT())) {
-                currentConstraintSet = currentConstraintSet.withConstraint(new TypeSubtypeOfType(b.getS(), a.getS()));
+                currentConstraintSet = currentConstraintSet.withConstraint(new TypeSubtypeOfType(typeSolver, b.getS(), a.getS()));
             }
             return currentConstraintSet;
         }, newConstraintsSet);
@@ -266,7 +266,7 @@ public class BoundSet {
 
         newConstraintsSet = forEachPairSubtypeAndSubtype((a, b, currentConstraintSet) -> {
             if (areSameTypeInference(a.getT(), b.getS())) {
-                currentConstraintSet = currentConstraintSet.withConstraint(new TypeSubtypeOfType(b.getS(), a.getT()));
+                currentConstraintSet = currentConstraintSet.withConstraint(new TypeSubtypeOfType(typeSolver, b.getS(), a.getT()));
             }
             return currentConstraintSet;
         }, newConstraintsSet);
@@ -318,7 +318,7 @@ public class BoundSet {
                 Type S = b.getS();
                 Type T = b.getT();
                 Substitution sub = Substitution.empty().withPair(alpha.getTypeParameterDeclaration(), U);
-                currentConstraintSet = currentConstraintSet.withConstraint(new TypeSubtypeOfType(sub.apply(S), sub.apply(T)));
+                currentConstraintSet = currentConstraintSet.withConstraint(new TypeSubtypeOfType(typeSolver, sub.apply(S), sub.apply(T)));
             }
             if (isInferenceVariable(a.getT()) && isProperType(a.getS())) {
                 InferenceVariable alpha = (InferenceVariable)a.getT();
@@ -326,7 +326,7 @@ public class BoundSet {
                 Type S = b.getS();
                 Type T = b.getT();
                 Substitution sub = Substitution.empty().withPair(alpha.getTypeParameterDeclaration(), U);
-                currentConstraintSet = currentConstraintSet.withConstraint(new TypeSubtypeOfType(sub.apply(S), sub.apply(T)));
+                currentConstraintSet = currentConstraintSet.withConstraint(new TypeSubtypeOfType(typeSolver, sub.apply(S), sub.apply(T)));
             }
             return currentConstraintSet;
         }, newConstraintsSet);
@@ -407,11 +407,11 @@ public class BoundSet {
         if (newConstraintsSet.isEmpty()) {
             return this;
         } else {
-            BoundSet newBounds = newConstraintsSet.reduce();
+            BoundSet newBounds = newConstraintsSet.reduce(typeSolver);
             if (newBounds.isEmpty()) {
                 return this;
             }
-            return this.incorporate(newBounds);
+            return this.incorporate(newBounds, typeSolver);
         }
     }
 
@@ -698,7 +698,7 @@ public class BoundSet {
 
                 //   The bounds α1 = T1, ..., αn = Tn are incorporated with the current bound set.
 
-                BoundSet incorporatedBoundSet = this.incorporate(newBounds);
+                BoundSet incorporatedBoundSet = this.incorporate(newBounds, typeSolver);
 
                 //   If the result does not contain the bound false, then the result becomes the new bound set, and resolution
                 //   proceeds by selecting a new set of variables to instantiate (if necessary), as described above.

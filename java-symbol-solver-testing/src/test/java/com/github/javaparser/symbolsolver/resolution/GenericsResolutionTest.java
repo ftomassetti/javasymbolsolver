@@ -196,6 +196,18 @@ public class GenericsResolutionTest extends AbstractResolutionTest {
     }
 
     @Test
+    public void resolveUsageOfMethodOfGenericClassUsingTypeInference() throws ParseException {
+        CompilationUnit cu = parseSample("Generics");
+        ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "GenericMethodCalls.Derived");
+        MethodDeclaration method = Navigator.demandMethod(clazz, "caller");
+        MethodCallExpr expression = Navigator.findMethodCall(method, "callee");
+
+        MethodUsage methodUsage = JavaParserFacade.get(new ReflectionTypeSolver()).solveMethodAsUsageUsingTypeInference(expression);
+
+        assertEquals("callee", methodUsage.getName());
+    }
+
+    @Test
     public void resolveElementOfList() throws ParseException {
         CompilationUnit cu = parseSample("ElementOfList");
         ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "ElementOfList");
@@ -417,6 +429,21 @@ public class GenericsResolutionTest extends AbstractResolutionTest {
         JavaParserFacade javaParserFacade = JavaParserFacade.get(typeSolver);
 
         MethodUsage methodUsage = javaParserFacade.solveMethodAsUsage(methodCall);
+
+        assertEquals("foo", methodUsage.getName());
+    }
+
+    @Test
+    public void methodWithGenericParameterTypesUsingTypeInference() throws ParseException {
+        CompilationUnit cu = parseSample("GenericCollectionWithExtension");
+        ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "Foo");
+        MethodDeclaration method = Navigator.demandMethod(clazz, "bar");
+        MethodCallExpr methodCall = Navigator.findMethodCall(method, "foo");
+
+        TypeSolver typeSolver = new ReflectionTypeSolver();
+        JavaParserFacade javaParserFacade = JavaParserFacade.get(typeSolver);
+
+        MethodUsage methodUsage = javaParserFacade.solveMethodAsUsageUsingTypeInference(methodCall);
 
         assertEquals("foo", methodUsage.getName());
     }

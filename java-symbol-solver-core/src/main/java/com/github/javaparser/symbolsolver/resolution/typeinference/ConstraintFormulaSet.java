@@ -1,5 +1,7 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference;
 
+import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -30,14 +32,14 @@ public class ConstraintFormulaSet {
      * ultimately, to express via a bound set the conditions under which the choices for inferred types would render
      * each constraint formula true.
      */
-    public BoundSet reduce() {
+    public BoundSet reduce(TypeSolver typeSolver) {
         List<ConstraintFormula> constraints = new LinkedList<>(constraintFormulas);
         BoundSet boundSet = BoundSet.empty();
         while (constraints.size() > 0) {
             ConstraintFormula constraintFormula = constraints.remove(0);
             ConstraintFormula.ReductionResult reductionResult = constraintFormula.reduce(boundSet);
             constraints.addAll(reductionResult.getConstraintFormulas());
-            boundSet.incorporate(reductionResult.getBoundSet());
+            boundSet.incorporate(reductionResult.getBoundSet(), typeSolver);
         }
         return boundSet;
     }

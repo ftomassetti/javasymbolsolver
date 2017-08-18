@@ -44,7 +44,7 @@ public class ExpressionCompatibleWithType extends ConstraintFormula {
 
         if (isStandaloneExpression(expression)) {
             Type s = JavaParserFacade.get(typeSolver).getType(expression);
-            return ReductionResult.empty().withConstraint(new TypeCompatibleWithType(s, T));
+            return ReductionResult.empty().withConstraint(new TypeCompatibleWithType(typeSolver, s, T));
         }
 
         // Otherwise, the expression is a poly expression (§15.2). The result depends on the form of the expression:
