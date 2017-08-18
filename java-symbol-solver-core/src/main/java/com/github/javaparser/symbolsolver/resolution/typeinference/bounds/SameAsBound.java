@@ -7,6 +7,7 @@ import com.github.javaparser.symbolsolver.resolution.typeinference.Instantiation
 import com.github.javaparser.utils.Pair;
 
 import java.util.Optional;
+import java.util.Set;
 
 import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.isInferenceVariable;
 import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.isProperType;
@@ -17,6 +18,11 @@ import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHe
 public class SameAsBound extends Bound {
     private Type s;
     private Type t;
+
+    @Override
+    public Set<InferenceVariable> usedInferenceVariables() {
+        throw new UnsupportedOperationException();
+    }
 
     public Type getS() {
         return s;

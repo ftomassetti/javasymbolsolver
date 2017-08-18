@@ -5,6 +5,7 @@ import com.github.javaparser.symbolsolver.resolution.typeinference.Bound;
 import com.github.javaparser.symbolsolver.resolution.typeinference.InferenceVariable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Capture(G<A1, ..., An>): The variables α1, ..., αn represent the result of capture conversion (§5.1.10)
@@ -17,6 +18,11 @@ public class CapturesBound extends Bound {
     public CapturesBound(List<InferenceVariable> inferenceVariables, List<Type> typesOrWildcards) {
         this.inferenceVariables = inferenceVariables;
         this.typesOrWildcards = typesOrWildcards;
+    }
+
+    @Override
+    public Set<InferenceVariable> usedInferenceVariables() {
+        throw new UnsupportedOperationException();
     }
 
     public List<InferenceVariable> getInferenceVariables() {
