@@ -1,13 +1,11 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference.constraintformulas;
 
-import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.resolution.typeinference.BoundSet;
 import com.github.javaparser.symbolsolver.resolution.typeinference.ConstraintFormula;
-import com.github.javaparser.symbolsolver.resolution.typeinference.ExpressionHelper;
 
 import static com.github.javaparser.symbolsolver.resolution.typeinference.ExpressionHelper.isPolyExpression;
 import static com.github.javaparser.symbolsolver.resolution.typeinference.ExpressionHelper.isStandaloneExpression;
@@ -164,4 +162,32 @@ public class ExpressionCompatibleWithType extends ConstraintFormula {
         throw new RuntimeException("This should not happen");
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ExpressionCompatibleWithType that = (ExpressionCompatibleWithType) o;
+
+        if (!typeSolver.equals(that.typeSolver)) return false;
+        if (!expression.equals(that.expression)) return false;
+        return T.equals(that.T);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = typeSolver.hashCode();
+        result = 31 * result + expression.hashCode();
+        result = 31 * result + T.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "ExpressionCompatibleWithType{" +
+                "typeSolver=" + typeSolver +
+                ", expression=" + expression +
+                ", T=" + T +
+                '}';
+    }
 }
