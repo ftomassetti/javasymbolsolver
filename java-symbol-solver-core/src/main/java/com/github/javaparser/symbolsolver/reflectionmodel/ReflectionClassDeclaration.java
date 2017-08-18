@@ -17,6 +17,7 @@
 package com.github.javaparser.symbolsolver.reflectionmodel;
 
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.core.resolution.Context;
 import com.github.javaparser.symbolsolver.javaparsermodel.LambdaArgumentTypePlaceholder;
 import com.github.javaparser.symbolsolver.javaparsermodel.contexts.ContextHelper;
@@ -168,6 +169,37 @@ public class ReflectionClassDeclaration extends AbstractClassDeclaration {
         return new ReferenceTypeImpl(this, typeSolver);
     }
 
+    public Optional<MethodUsage> solveMethodAsUsageUsingTypeInference(MethodCallExpr methodCall, TypeSolver typeSolver, Context invokationContext, List<Type> typeParameterValues) {
+        List<MethodUsage> methods = new ArrayList<>();
+        for (Method method : Arrays.stream(clazz.getDeclaredMethods()).filter((m) -> m.getName().equals(methodCall.getNameAsString())).sorted(new MethodComparator()).collect(Collectors.toList())) {
+            if (method.isBridge() || method.isSynthetic()) continue;
+            MethodDeclaration methodDeclaration = new ReflectionMethodDeclaration(method, typeSolver);
+            MethodUsage methodUsage = new MethodUsage(methodDeclaration);
+            for (int i = 0; i < getTypeParameters().size() && i < typeParameterValues.size(); i++) {
+                TypeParameterDeclaration tpToReplace = getTypeParameters().get(i);
+                Type newValue = typeParameterValues.get(i);
+                methodUsage = methodUsage.replaceTypeParameter(tpToReplace, newValue);
+            }
+            methods.add(methodUsage);
+        }
+        if (getSuperClass() != null) {
+            ClassDeclaration superClass = (ClassDeclaration) getSuperClass().getTypeDeclaration();
+            Optional<MethodUsage> ref = ContextHelper.solveMethodAsUsageUsingTypeInference(superClass, methodCall, typeSolver, invokationContext, typeParameterValues);
+            if (ref.isPresent()) {
+                methods.add(ref.get());
+            }
+        }
+        for (ReferenceType interfaceDeclaration : getInterfaces()) {
+            Optional<MethodUsage> ref = ContextHelper.solveMethodAsUsageUsingTypeInference(interfaceDeclaration.getTypeDeclaration(), methodCall, typeSolver, invokationContext, typeParameterValues);
+            if (ref.isPresent()) {
+                methods.add(ref.get());
+            }
+        }
+        Optional<MethodUsage> ref = MethodResolutionLogic.findMostApplicableUsageUsingTypeInference(methods, methodCall, typeSolver);
+        return ref;
+    }
+
+    @Deprecated
     public Optional<MethodUsage> solveMethodAsUsage(String name, List<Type> argumentsTypes, TypeSolver typeSolver, Context invokationContext, List<Type> typeParameterValues) {
         List<MethodUsage> methods = new ArrayList<>();
         for (Method method : Arrays.stream(clazz.getDeclaredMethods()).filter((m) -> m.getName().equals(name)).sorted(new MethodComparator()).collect(Collectors.toList())) {

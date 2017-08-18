@@ -530,6 +530,38 @@ public class MethodResolutionLogic {
         return oneMoreSpecificFound;
     }
 
+    public static Optional<MethodUsage> findMostApplicableUsageUsingTypeInference(List<MethodUsage> methods, MethodCallExpr methodCall, TypeSolver typeSolver) {
+        List<MethodUsage> applicableMethods = methods.stream().filter((m) -> isApplicableUsingTypeInference(m.getDeclaration(), methodCall, typeSolver)).collect(Collectors.toList());
+
+        if (applicableMethods.isEmpty()) {
+            return Optional.empty();
+        }
+        if (applicableMethods.size() == 1) {
+            return Optional.of(applicableMethods.get(0));
+        } else {
+            MethodUsage winningCandidate = applicableMethods.get(0);
+            for (int i = 1; i < applicableMethods.size(); i++) {
+                MethodUsage other = applicableMethods.get(i);
+                if (isMoreSpecific(winningCandidate, other, typeSolver)) {
+                    // nothing to do
+                } else if (isMoreSpecific(other, winningCandidate, typeSolver)) {
+                    winningCandidate = other;
+                } else {
+                    if (winningCandidate.declaringType().getQualifiedName().equals(other.declaringType().getQualifiedName())) {
+                        if (!areOverride(winningCandidate, other)) {
+                            throw new MethodAmbiguityException("Ambiguous method call: cannot find a most applicable method: " + winningCandidate + ", " + other + ". First declared in " + winningCandidate.declaringType().getQualifiedName());
+                        }
+                    } else {
+                        // we expect the methods to be ordered such that inherited methods are later in the list
+                        //throw new UnsupportedOperationException();
+                    }
+                }
+            }
+            return Optional.of(winningCandidate);
+        }
+    }
+
+    @Deprecated
     public static Optional<MethodUsage> findMostApplicableUsage(List<MethodUsage> methods, String name, List<Type> argumentsTypes, TypeSolver typeSolver) {
         List<MethodUsage> applicableMethods = methods.stream().filter((m) -> isApplicable(m, name, argumentsTypes, typeSolver)).collect(Collectors.toList());
 

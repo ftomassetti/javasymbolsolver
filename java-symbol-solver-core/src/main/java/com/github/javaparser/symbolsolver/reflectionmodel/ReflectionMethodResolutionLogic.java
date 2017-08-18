@@ -16,6 +16,7 @@
 
 package com.github.javaparser.symbolsolver.reflectionmodel;
 
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.core.resolution.Context;
 import com.github.javaparser.symbolsolver.model.declarations.MethodDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.ReferenceTypeDeclaration;
@@ -70,6 +71,7 @@ class ReflectionMethodResolutionLogic {
         return MethodResolutionLogic.findMostApplicable(methods, name, parameterTypes, typeSolver);
     }
 
+    @Deprecated
     static Optional<MethodUsage> solveMethodAsUsage(String name, List<Type> argumentsTypes, TypeSolver typeSolver,
                                                     Context invokationContext, List<Type> typeParameterValues,
                                                     ReferenceTypeDeclaration scopeType, Class clazz) {
@@ -121,6 +123,59 @@ class ReflectionMethodResolutionLogic {
             return pt;
         }).collect(Collectors.toList());
         return MethodResolutionLogic.findMostApplicableUsage(methods, name, argumentsTypes, typeSolver);
+    }
+
+    static Optional<MethodUsage> solveMethodAsUsageUsingTypeInference(MethodCallExpr methodCall, TypeSolver typeSolver,
+                                                                      Context invokationContext, List<Type> typeParameterValues,
+                                                                      ReferenceTypeDeclaration scopeType, Class clazz) {
+        if (typeParameterValues.size() != scopeType.getTypeParameters().size()) {
+            // if it is zero we are going to ignore them
+            if (!scopeType.getTypeParameters().isEmpty()) {
+                // Parameters not specified, so default to Object
+                typeParameterValues = new ArrayList<>();
+                for (int i = 0; i < scopeType.getTypeParameters().size(); i++) {
+                    typeParameterValues.add(new ReferenceTypeImpl(new ReflectionClassDeclaration(Object.class, typeSolver), typeSolver));
+                }
+            }
+        }
+        List<MethodUsage> methods = new ArrayList<>();
+        for (Method method : clazz.getMethods()) {
+            if (method.getName().equals(methodCall.getNameAsString()) && !method.isBridge() && !method.isSynthetic()) {
+                MethodDeclaration methodDeclaration = new ReflectionMethodDeclaration(method, typeSolver);
+                MethodUsage methodUsage = replaceParams(typeParameterValues, scopeType, methodDeclaration);
+                methods.add(methodUsage);
+            }
+
+        }
+
+        for(ReferenceType ancestor : scopeType.getAncestors()){
+            SymbolReference<MethodDeclaration> ref = MethodResolutionLogic.solveMethodInTypeUsingTypeInference(ancestor.getTypeDeclaration(), methodCall, typeSolver);
+            if (ref.isSolved()){
+                MethodDeclaration correspondingDeclaration = ref.getCorrespondingDeclaration();
+                MethodUsage methodUsage = replaceParams(typeParameterValues, ancestor.getTypeDeclaration(), correspondingDeclaration);
+                methods.add(methodUsage);
+            }
+        }
+
+        if (scopeType.getAncestors().isEmpty()){
+            ReferenceTypeImpl objectClass = new ReferenceTypeImpl(new ReflectionClassDeclaration(Object.class, typeSolver), typeSolver);
+            SymbolReference<MethodDeclaration> ref = MethodResolutionLogic.solveMethodInTypeUsingTypeInference(objectClass.getTypeDeclaration(), methodCall, typeSolver);
+            if (ref.isSolved()) {
+                MethodUsage usage = replaceParams(typeParameterValues, objectClass.getTypeDeclaration(), ref.getCorrespondingDeclaration());
+                methods.add(usage);
+            }
+        }
+
+        final List<Type> finalTypeParameterValues = typeParameterValues;
+//        argumentsTypes = argumentsTypes.stream().map((pt) -> {
+//            int i = 0;
+//            for (TypeParameterDeclaration tp : scopeType.getTypeParameters()) {
+//                pt = pt.replaceTypeVariables(tp, finalTypeParameterValues.get(i));
+//                i++;
+//            }
+//            return pt;
+//        }).collect(Collectors.toList());
+        return MethodResolutionLogic.findMostApplicableUsageUsingTypeInference(methods, methodCall, typeSolver);
     }
 
     private static MethodUsage replaceParams(List<Type> typeParameterValues, ReferenceTypeDeclaration typeParametrizable, MethodDeclaration methodDeclaration) {

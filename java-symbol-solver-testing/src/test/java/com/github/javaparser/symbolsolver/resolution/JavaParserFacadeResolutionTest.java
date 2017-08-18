@@ -71,6 +71,27 @@ public class JavaParserFacadeResolutionTest extends AbstractResolutionTest {
         assertEquals("java.lang.Throwable.getMessage()", methodUsage.getQualifiedSignature());
     }
 
+    @Test
+    public void solvingReferenceToUnsupportedOperationExceptionUsingTypeInference() {
+        String code = "public class Bla {\n" +
+                "    public void main()\n" +
+                "    {\n" +
+                "        try\n" +
+                "        {\n" +
+                "            int i = 0;\n" +
+                "        }\n" +
+                "        catch (UnsupportedOperationException e)\n" +
+                "        {\n" +
+                "            String s;\n" +
+                "            e.getMessage();\n" +
+                "        }\n" +
+                "    }\n" +
+                "}";
+        MethodCallExpr methodCallExpr = Navigator.findNodeOfGivenClass(JavaParser.parse(code), MethodCallExpr.class);
+        MethodUsage methodUsage = JavaParserFacade.get(new ReflectionTypeSolver()).solveMethodAsUsageUsingTypeInference(methodCallExpr);
+        assertEquals("java.lang.Throwable.getMessage()", methodUsage.getQualifiedSignature());
+    }
+
     // See issue 46
     @Test
     public void solvingReferenceToCatchClauseParam() {
