@@ -36,4 +36,30 @@ public class LambdaThrowsCompatibleWithType extends ConstraintFormula {
         //   - If n > 0, the constraint reduces to a set of subtyping constraints: for all i (1 ≤ i ≤ m), if Xi is not a subtype of any proper type in the throws clause, then the constraints include, for all j (1 ≤ j ≤ n), ‹Xi <: Ej›. In addition, for all j (1 ≤ j ≤ n), the constraint reduces to the bound throws Ej.
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        LambdaThrowsCompatibleWithType that = (LambdaThrowsCompatibleWithType) o;
+
+        if (!lambdaExpression.equals(that.lambdaExpression)) return false;
+        return T.equals(that.T);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = lambdaExpression.hashCode();
+        result = 31 * result + T.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "LambdaThrowsCompatibleWithType{" +
+                "lambdaExpression=" + lambdaExpression +
+                ", T=" + T +
+                '}';
+    }
 }
