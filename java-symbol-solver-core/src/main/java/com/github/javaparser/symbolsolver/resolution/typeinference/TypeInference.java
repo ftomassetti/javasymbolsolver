@@ -603,7 +603,12 @@ public class TypeInference {
             if (instantiationSet.isEmpty()) {
                 return new MethodUsage(methodDeclaration);
             }
-            throw new UnsupportedOperationException("InstantiationSet = " + instantiationSet);
+            List<Type> paramTypes = new LinkedList<>();
+            for (int i=0;i<methodDeclaration.getNumberOfParams();i++) {
+                paramTypes.add(instantiationSet.apply(methodDeclaration.getParam(i).getType()));
+            }
+            Type returnType = instantiationSet.apply(methodDeclaration.getReturnType());
+            return new MethodUsage(methodDeclaration, paramTypes, returnType);
         } else {
             throw new IllegalArgumentException();
         }
