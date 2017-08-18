@@ -38,6 +38,9 @@ public class TypeHelper {
                 return true;
             }
         }
+        if (type.isPrimitive()) {
+            return true;
+        }
         throw new UnsupportedOperationException(type.toString());
     }
 
@@ -135,7 +138,11 @@ public class TypeHelper {
     }
 
     private static boolean areCompatibleThroughWideningPrimitiveConversion(Type s, Type t) {
-        throw new UnsupportedOperationException();
+        if (s.isPrimitive() && t.isPrimitive()) {
+            return s.isAssignableBy(t);
+        } else {
+            return false;
+        }
     }
 
     public static boolean isInferenceVariable(Type type) {

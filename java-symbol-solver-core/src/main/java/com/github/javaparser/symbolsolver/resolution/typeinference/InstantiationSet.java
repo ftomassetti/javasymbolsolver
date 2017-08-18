@@ -27,4 +27,8 @@ public class InstantiationSet {
         newInstance.instantiations.add(instantiation);
         return newInstance;
     }
+
+    public boolean isEmpty() {
+        return instantiations.isEmpty();
+    }
 }

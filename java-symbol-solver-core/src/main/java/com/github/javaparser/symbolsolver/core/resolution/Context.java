@@ -16,16 +16,20 @@
 
 package com.github.javaparser.symbolsolver.core.resolution;
 
+import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import com.github.javaparser.symbolsolver.model.declarations.*;
 import com.github.javaparser.symbolsolver.model.methods.MethodUsage;
 import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.model.resolution.Value;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
+import com.github.javaparser.symbolsolver.resolution.typeinference.TypeInference;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Context is very similar to scope.
@@ -98,6 +102,14 @@ public interface Context {
     }
 
     default Optional<MethodUsage> solveMethodAsUsageUsingTypeInference(MethodCallExpr call, TypeSolver typeSolver) {
-        throw new UnsupportedOperationException("Not implemented for " + this.getClass().getCanonicalName());
+        String name = call.getNameAsString();
+        List<Type> argumentsTypes = call.getArguments().stream().map(a -> JavaParserFacade.get(typeSolver).getType(a)).collect(Collectors.toList());
+        SymbolReference<MethodDeclaration> methodSolved = solveMethod(name, argumentsTypes, false, typeSolver);
+        if (methodSolved.isSolved()) {
+            MethodDeclaration methodDeclaration = methodSolved.getCorrespondingDeclaration();
+            return Optional.of(TypeInference.toMethodUsage(call, methodDeclaration, typeSolver));
+        } else {
+            return Optional.empty();
+        }
     }
 }

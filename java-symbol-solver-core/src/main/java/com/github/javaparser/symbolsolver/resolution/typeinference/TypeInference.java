@@ -92,11 +92,7 @@ public class TypeInference {
         return types;
     }
 
-    /**
-     * Determine whether a potentially applicable generic method m is applicable for a method invocation that
-     * provides no explicit type arguments.
-     */
-    public boolean invocationApplicabilityInference(MethodCallExpr methodCallExpr, MethodDeclaration methodDeclaration) {
+    public Optional<InstantiationSet> instantiationInference(MethodCallExpr methodCallExpr, MethodDeclaration methodDeclaration) {
 //        if (methodCallExpr.getTypeArguments().isPresent()) {
 //            throw new IllegalArgumentException("Type inference unnecessary as type arguments have been specified");
 //        }
@@ -158,7 +154,7 @@ public class TypeInference {
         }
 
         if (!C.isPresent()) {
-            return false;
+            return Optional.empty();
         }
 
         // - C is reduced (§18.2) and the resulting bounds are incorporated with B1 to produce a new bound set, B2.
@@ -170,16 +166,19 @@ public class TypeInference {
         //   inference variables in B2 succeeds (§18.4).
 
         if (B2.containsFalse()) {
-            return false;
+            return Optional.empty();
         }
 
         Optional<InstantiationSet> instantiation = B2.performResolution(alphas);
-        if (instantiation.isPresent()) {
-            //return instantiation.get().allInferenceVariablesAreResolved(B2);
-            return true;
-        } else {
-            return false;
-        }
+        return instantiation;
+    }
+
+    /**
+     * Determine whether a potentially applicable generic method m is applicable for a method invocation that
+     * provides no explicit type arguments.
+     */
+    public boolean invocationApplicabilityInference(MethodCallExpr methodCallExpr, MethodDeclaration methodDeclaration) {
+        return instantiationInference(methodCallExpr, methodDeclaration).isPresent();
     }
 
     private boolean isImplicitlyTyped(LambdaExpr lambdaExpr) {
@@ -592,7 +591,17 @@ public class TypeInference {
         throw new UnsupportedOperationException();
     }
 
-    public static MethodUsage toMethodUsage(MethodCallExpr call, MethodDeclaration correspondingDeclaration, TypeSolver typeSolver) {
-        throw new UnsupportedOperationException();
+    public static MethodUsage toMethodUsage(MethodCallExpr call, MethodDeclaration methodDeclaration, TypeSolver typeSolver) {
+        TypeInference typeInference = new TypeInference(typeSolver);
+        Optional<InstantiationSet> instantiationSetOpt = typeInference.instantiationInference(call, methodDeclaration);
+        if (instantiationSetOpt.isPresent()) {
+            InstantiationSet instantiationSet = instantiationSetOpt.get();
+            if (instantiationSet.isEmpty()) {
+                return new MethodUsage(methodDeclaration);
+            }
+            throw new UnsupportedOperationException();
+        } else {
+            throw new IllegalArgumentException();
+        }
     }
 }
