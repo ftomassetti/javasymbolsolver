@@ -16,8 +16,14 @@
 
 package com.github.javaparser.symbolsolver.resolution;
 
+import com.github.javaparser.JavaParser;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
+import com.github.javaparser.symbolsolver.model.declarations.MethodDeclaration;
+import com.github.javaparser.symbolsolver.model.declarations.ReferenceTypeDeclaration;
+import com.github.javaparser.symbolsolver.model.declarations.TypeDeclaration;
 import com.github.javaparser.symbolsolver.model.methods.MethodUsage;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.model.typesystem.ReferenceType;
@@ -30,6 +36,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 
@@ -45,6 +52,22 @@ public class MethodsResolutionLogicUsingTypeInferenceTest extends AbstractResolu
         combinedTypeSolverNewCode.add(new JavaParserTypeSolver(srcNewCode));
         combinedTypeSolverNewCode.add(new JavaParserTypeSolver(adaptPath(new File("src/test/resources/javaparser_new_src/javaparser-generated-sources"))));
         typeSolver = combinedTypeSolverNewCode;
+    }
+
+    @Test
+    public void compatibilityFor() {
+        CompilationUnit cu = JavaParser.parse("import java.util.LinkedList;\n" +
+                "import java.util.Collections;\n" +
+                "\n" +
+                "class A {\n" +
+                "\tObject field = Collections.disjoint(new LinkedList<String>(), new LinkedList<String>());\t\n" +
+                "}");
+
+        ReferenceTypeDeclaration typeDeclaration = typeSolver.solveType(Collections.class.getCanonicalName());
+        MethodDeclaration methodDeclaration = typeDeclaration.getDeclaredMethods().stream().filter(m -> m.getName().equals("disjoint")).findFirst().get();
+        MethodCallExpr methodCallExpr = (MethodCallExpr) cu.getClassByName("A").get().getFields().get(0).getVariables().get(0).getInitializer().get();
+
+        assertEquals(true, MethodResolutionLogic.isApplicableUsingTypeInference(methodDeclaration, methodCallExpr, typeSolver));
     }
 
     @Test

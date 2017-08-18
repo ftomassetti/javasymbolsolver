@@ -14,17 +14,6 @@ import java.util.List;
 public class TypeInference {
 
     /**
-     * Takes a compatibility assertion about an expression or type, called a constraint formula, and reduces it to a
-     * set of bounds on inference variables. Often, a constraint formula reduces to other constraint formulas,
-     * which must be recursively reduced. A procedure is followed to identify these additional constraint formulas and,
-     * ultimately, to express via a bound set the conditions under which the choices for inferred types would render
-     * each constraint formula true.
-     */
-    public BoundSet performReduction(List<ConstraintFormula> constraints) {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
      * Maintains a set of inference variable bounds, ensuring that these are consistent as new bounds are added.
      * Because the bounds on one variable can sometimes impact the possible choices for another variable, this process
      * propagates bounds between such interdependent variables.

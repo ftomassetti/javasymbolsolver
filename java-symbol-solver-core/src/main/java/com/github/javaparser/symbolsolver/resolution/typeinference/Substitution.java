@@ -31,4 +31,12 @@ public class Substitution {
         this.typeParameterDeclarations = new LinkedList<>();
         this.types = new LinkedList<>();
     }
+
+    public Type apply(Type originalType) {
+        Type result = originalType;
+        for (int i=0;i<typeParameterDeclarations.size();i++) {
+            result = result.replaceTypeVariables(typeParameterDeclarations.get(i), types.get(i));
+        }
+        return result;
+    }
 }
