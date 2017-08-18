@@ -13,6 +13,14 @@ public abstract class ConstraintFormula {
         private BoundSet boundSet;
         private List<ConstraintFormula> constraintFormulas;
 
+        public BoundSet getBoundSet() {
+            return boundSet;
+        }
+
+        public List<ConstraintFormula> getConstraintFormulas() {
+            return constraintFormulas;
+        }
+
         public static ReductionResult empty() {
             return new ReductionResult();
         }
