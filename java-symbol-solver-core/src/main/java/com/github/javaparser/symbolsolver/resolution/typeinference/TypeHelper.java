@@ -153,6 +153,13 @@ public class TypeHelper {
         if (isInferenceVariable(type)) {
             return new HashSet<>(Arrays.asList((InferenceVariable)type));
         }
-        throw new UnsupportedOperationException();
+        if (type.isReferenceType()) {
+            Set<InferenceVariable> res = new HashSet<>();
+            for (Type tp : type.asReferenceType().typeParametersValues()) {
+                res.addAll(usedInferenceVariables(tp));
+            }
+            return res;
+        }
+        throw new UnsupportedOperationException(type.toString());
     }
 }

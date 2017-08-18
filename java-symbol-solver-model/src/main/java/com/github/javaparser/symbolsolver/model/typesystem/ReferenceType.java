@@ -475,4 +475,6 @@ public abstract class ReferenceType implements Type, TypeParametrized, TypeParam
     public ReferenceType deriveTypeParameters(TypeParametersMap typeParametersMap) {
         return create(typeDeclaration, typeParametersMap, typeSolver);
     }
+
+    public abstract Type toRawType();
 }

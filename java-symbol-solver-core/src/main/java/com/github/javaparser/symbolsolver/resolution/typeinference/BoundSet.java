@@ -155,7 +155,21 @@ public class BoundSet {
     }
 
     private List<Pair<ReferenceType, ReferenceType>> findPairsOfCommonAncestors(ReferenceType r1, ReferenceType r2) {
-        throw new UnsupportedOperationException();
+        List<ReferenceType> set1 = new LinkedList<>();
+        set1.add(r1);
+        set1.addAll(r1.getAllAncestors());
+        List<ReferenceType> set2 = new LinkedList<>();
+        set2.add(r2);
+        set2.addAll(r2.getAllAncestors());
+        List<Pair<ReferenceType, ReferenceType>> pairs = new LinkedList<>();
+        for (ReferenceType rtFrom1 : set1) {
+            for (ReferenceType rtFrom2 : set2) {
+                if (rtFrom1.getTypeDeclaration().equals(rtFrom2.getTypeDeclaration())) {
+                    pairs.add(new Pair<>(rtFrom1, rtFrom2));
+                }
+            }
+        }
+        return pairs;
     }
 
     /**
@@ -420,6 +434,10 @@ public class BoundSet {
         public InferenceVariable getDependedOn() {
             return dependedOn;
         }
+
+        public boolean isReflexive() {
+            return dependedOn.equals(depending);
+        }
     }
 
     private Set<InferenceVariable> allInferenceVariables() {
@@ -446,6 +464,77 @@ public class BoundSet {
             }
         }
         throw new IllegalArgumentException();
+    }
+
+    private boolean thereIsSomeJSuchThatβequalAlphaJ(Set<InferenceVariable> alphas, InferenceVariable beta) {
+        for (InferenceVariable alphaJ : alphas) {
+            for (Bound b : bounds) {
+                if (b instanceof SameAsBound) {
+                    SameAsBound sameAsBound = (SameAsBound)b;
+                    if (sameAsBound.getS().equals(alphaJ) && sameAsBound.getT().equals(beta)) {
+                        return true;
+                    }
+                    if (sameAsBound.getT().equals(alphaJ) && sameAsBound.getS().equals(beta)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private <T> List<Set<T>> buildAllSubsetsOfSize(Set<T> allElements, int desiredSize) {
+        if (desiredSize == allElements.size()) {
+            return Arrays.asList(allElements);
+        } else {
+            List<Set<T>> res = new LinkedList<>();
+            for (T element : allElements) {
+                Set<T> subset = allButOne(allElements, element);
+                res.addAll(buildAllSubsetsOfSize(subset, desiredSize));
+            }
+            return res;
+        }
+    }
+
+    private <T> Set<T> allButOne(Set<T> elements, T element) {
+        Set<T> set = new HashSet<T>(elements);
+        set.remove(element);
+        return set;
+    }
+
+    /**
+     * there exists no non-empty proper subset of { α1, ..., αn } with this property.
+     */
+    private Optional<Set<InferenceVariable>> smallestSetWithProperty(Set<InferenceVariable> uninstantiatedVariables,
+                                                                     List<VariableDependency> dependencies) {
+        for (int i=1;i<=uninstantiatedVariables.size();i++) {
+            for (Set<InferenceVariable> aSubSet : buildAllSubsetsOfSize(uninstantiatedVariables, i)){
+                if (hasProperty(aSubSet, dependencies)) {
+                    return Optional.of(aSubSet);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * if αi depends on the resolution of a variable β, then either β has an instantiation
+     * or there is some j such that β = αj
+     * @return
+     */
+    private boolean hasProperty(Set<InferenceVariable> alphas, List<VariableDependency> dependencies) {
+        for (InferenceVariable alphaI: alphas) {
+            for (InferenceVariable beta: dependencies.stream()
+                    .filter(d -> d.depending.equals(alphaI))
+                    .filter(d -> !d.isReflexive())
+                    .map(d -> d.dependedOn)
+                    .collect(Collectors.toList())) {
+                if (!hasInstantiationFor(beta) && !thereIsSomeJSuchThatβequalAlphaJ(alphas, beta)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -546,50 +635,88 @@ public class BoundSet {
         // Otherwise, let { α1, ..., αn } be a non-empty subset of uninstantiated variables in V such that i)
         // for all i (1 ≤ i ≤ n), if αi depends on the resolution of a variable β, then either β has an instantiation
         // or there is some j such that β = αj; and ii) there exists no non-empty proper subset of { α1, ..., αn }
-        // with this property. Resolution proceeds by generating an instantiation for each of α1, ..., αn based on the
+        // with this property.
+
+        Set<InferenceVariable> uninstantiatedPortionOfV = new HashSet<>();
+        for (InferenceVariable v : V) {
+            if (!hasInstantiationFor(v)) {
+                uninstantiatedPortionOfV.add(v);
+            }
+        }
+        Optional<Set<InferenceVariable>> alphasOpt = smallestSetWithProperty(uninstantiatedPortionOfV, dependencies);
+        if (!alphasOpt.isPresent()) {
+            throw new IllegalStateException();
+        }
+        Set<InferenceVariable> alphas = alphasOpt.get();
+
+        // Resolution proceeds by generating an instantiation for each of α1, ..., αn based on the
         // bounds in the bound set:
-        //
+
+        boolean hasSomeCaptureForAlphas = alphas.stream().anyMatch(
+                alphaI -> appearInLeftPartOfCapture(alphaI)
+        );
+
         // - If the bound set does not contain a bound of the form G<..., αi, ...> = capture(G<...>)
         //   for all i (1 ≤ i ≤ n), then a candidate instantiation Ti is defined for each αi:
-        //
-        //   - If αi has one or more proper lower bounds, L1, ..., Lk, then Ti = lub(L1, ..., Lk) (§4.10.4).
-        //
-        //   - Otherwise, if the bound set contains throws αi, and the proper upper bounds of αi are, at most,
-        //     Exception, Throwable, and Object, then Ti = RuntimeException.
-        //
-        //   - Otherwise, where αi has proper upper bounds U1, ..., Uk, Ti = glb(U1, ..., Uk) (§5.1.10).
-        //
-        //   The bounds α1 = T1, ..., αn = Tn are incorporated with the current bound set.
-        //
-        //   If the result does not contain the bound false, then the result becomes the new bound set, and resolution
-        //   proceeds by selecting a new set of variables to instantiate (if necessary), as described above.
-        //
-        //   Otherwise, the result contains the bound false, so a second attempt is made to instantiate { α1, ..., αn }
-        //   by performing the step below.
-        //
-        // - If the bound set contains a bound of the form G<..., αi, ...> = capture(G<...>) for some i (1 ≤ i ≤ n), or;
-        //
-        //   If the bound set produced in the step above contains the bound false;
-        //
-        //   then let Y1, ..., Yn be fresh type variables whose bounds are as follows:
-        //
-        //   - For all i (1 ≤ i ≤ n), if αi has one or more proper lower bounds L1, ..., Lk, then let the lower bound
-        //     of Yi be lub(L1, ..., Lk); if not, then Yi has no lower bound.
-        //
-        //   - For all i (1 ≤ i ≤ n), where αi has upper bounds U1, ..., Uk, let the upper bound of Yi be
-        //     glb(U1 θ, ..., Uk θ), where θ is the substitution [α1:=Y1, ..., αn:=Yn].
-        //
-        //   If the type variables Y1, ..., Yn do not have well-formed bounds (that is, a lower bound is not a subtype
-        //   of an upper bound, or an intersection type is inconsistent), then resolution fails.
-        //
-        //   Otherwise, for all i (1 ≤ i ≤ n), all bounds of the form G<..., αi, ...> = capture(G<...>) are removed
-        //   from the current bound set, and the bounds α1 = Y1, ..., αn = Yn are incorporated.
-        //
-        //   If the result does not contain the bound false, then the result becomes the new bound set, and resolution
-        //   proceeds by selecting a new set of variables to instantiate (if necessary), as described above.
-        //
-        //   Otherwise, the result contains the bound false, and resolution fails.
 
-        throw new UnsupportedOperationException();
+        if (!hasSomeCaptureForAlphas) {
+
+            //   - If αi has one or more proper lower bounds, L1, ..., Lk, then Ti = lub(L1, ..., Lk) (§4.10.4).
+            //
+            //   - Otherwise, if the bound set contains throws αi, and the proper upper bounds of αi are, at most,
+            //     Exception, Throwable, and Object, then Ti = RuntimeException.
+            //
+            //   - Otherwise, where αi has proper upper bounds U1, ..., Uk, Ti = glb(U1, ..., Uk) (§5.1.10).
+            //
+            //   The bounds α1 = T1, ..., αn = Tn are incorporated with the current bound set.
+            //
+            //   If the result does not contain the bound false, then the result becomes the new bound set, and resolution
+            //   proceeds by selecting a new set of variables to instantiate (if necessary), as described above.
+            //
+            //   Otherwise, the result contains the bound false, so a second attempt is made to instantiate { α1, ..., αn }
+            //   by performing the step below.
+
+            throw new UnsupportedOperationException();
+        }
+
+        // - If the bound set contains a bound of the form G<..., αi, ...> = capture(G<...>) for some i (1 ≤ i ≤ n), or;
+
+        else {
+
+            //   If the bound set produced in the step above contains the bound false;
+            //
+            //   then let Y1, ..., Yn be fresh type variables whose bounds are as follows:
+            //
+            //   - For all i (1 ≤ i ≤ n), if αi has one or more proper lower bounds L1, ..., Lk, then let the lower bound
+            //     of Yi be lub(L1, ..., Lk); if not, then Yi has no lower bound.
+            //
+            //   - For all i (1 ≤ i ≤ n), where αi has upper bounds U1, ..., Uk, let the upper bound of Yi be
+            //     glb(U1 θ, ..., Uk θ), where θ is the substitution [α1:=Y1, ..., αn:=Yn].
+            //
+            //   If the type variables Y1, ..., Yn do not have well-formed bounds (that is, a lower bound is not a subtype
+            //   of an upper bound, or an intersection type is inconsistent), then resolution fails.
+            //
+            //   Otherwise, for all i (1 ≤ i ≤ n), all bounds of the form G<..., αi, ...> = capture(G<...>) are removed
+            //   from the current bound set, and the bounds α1 = Y1, ..., αn = Yn are incorporated.
+            //
+            //   If the result does not contain the bound false, then the result becomes the new bound set, and resolution
+            //   proceeds by selecting a new set of variables to instantiate (if necessary), as described above.
+            //
+            //   Otherwise, the result contains the bound false, and resolution fails.
+
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    private boolean appearInLeftPartOfCapture(InferenceVariable inferenceVariable) {
+        for (Bound b : bounds) {
+            if (b instanceof CapturesBound) {
+                CapturesBound capturesBound = (CapturesBound)b;
+                if (capturesBound.getInferenceVariables().contains(inferenceVariable)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
