@@ -13,6 +13,8 @@ import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHe
 
 /**
  * S <: T, where at least one of S or T is an inference variable: S is a subtype of T
+ *
+ * @author Federico Tomassetti
  */
 public class SubtypeOfBound extends Bound {
     private Type s;

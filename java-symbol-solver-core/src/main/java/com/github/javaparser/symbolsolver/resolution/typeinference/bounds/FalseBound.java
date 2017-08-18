@@ -10,6 +10,8 @@ import java.util.Set;
 
 /**
  * No valid choice of inference variables exists.
+ *
+ * @author Federico Tomassetti
  */
 public class FalseBound extends Bound {
 
