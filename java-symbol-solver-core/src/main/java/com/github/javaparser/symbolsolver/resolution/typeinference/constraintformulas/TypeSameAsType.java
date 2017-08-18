@@ -55,4 +55,30 @@ public class TypeSameAsType extends ConstraintFormula {
 
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TypeSameAsType that = (TypeSameAsType) o;
+
+        if (!S.equals(that.S)) return false;
+        return T.equals(that.T);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = S.hashCode();
+        result = 31 * result + T.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "TypeSameAsType{" +
+                "S=" + S +
+                ", T=" + T +
+                '}';
+    }
 }
