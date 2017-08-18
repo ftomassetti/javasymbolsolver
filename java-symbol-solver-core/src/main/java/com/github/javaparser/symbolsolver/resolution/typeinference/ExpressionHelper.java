@@ -21,7 +21,15 @@ public class ExpressionHelper {
             throw new UnsupportedOperationException(expression.toString());
         }
         if (expression instanceof ObjectCreationExpr) {
-            throw new UnsupportedOperationException(expression.toString());
+            // A class instance creation expression is a poly expression (§15.2) if it uses the diamond form for type
+            // arguments to the class, and it appears in an assignment context or an invocation context (§5.2, §5.3).
+            // Otherwise, it is a standalone expression.
+            ObjectCreationExpr objectCreationExpr = (ObjectCreationExpr)expression;
+            if (objectCreationExpr.isUsingDiamondOperator()) {
+                throw new UnsupportedOperationException(expression.toString());
+            } else {
+                return false;
+            }
         }
         if (expression instanceof MethodCallExpr) {
             throw new UnsupportedOperationException(expression.toString());

@@ -1,8 +1,8 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference;
 
-import com.github.javaparser.ast.expr.Expression;
-import com.github.javaparser.ast.expr.LambdaExpr;
-import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.type.UnknownType;
+import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import com.github.javaparser.symbolsolver.model.declarations.InterfaceDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.MethodDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.TypeParameterDeclaration;
@@ -11,19 +11,29 @@ import com.github.javaparser.symbolsolver.model.typesystem.ReferenceTypeImpl;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.resolution.typeinference.bounds.SubtypeOfBound;
 import com.github.javaparser.symbolsolver.resolution.typeinference.bounds.ThrowsBound;
+import com.github.javaparser.symbolsolver.resolution.typeinference.constraintformulas.ExpressionCompatibleWithType;
+import com.github.javaparser.symbolsolver.resolution.typeinference.constraintformulas.TypeCompatibleWithType;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
+import static com.github.javaparser.symbolsolver.resolution.typeinference.ExpressionHelper.isStandaloneExpression;
+
 public class TypeInferenceAPI {
+
     public TypeInferenceAPI(TypeSolver typeSolver) {
+        if (typeSolver == null) {
+            throw new NullPointerException();
+        }
         this.typeSolver = typeSolver;
+        this.typeInference = new TypeInference();
+        this.object = new ReferenceTypeImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver);
     }
 
     private TypeSolver typeSolver;
-    private TypeInference typeInference = new TypeInference();
-    private final Type object = new ReferenceTypeImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver);
+    private TypeInference typeInference;
+    private final Type object;
 
     private BoundSet boundSetup(List<TypeParameterDeclaration> typeParameterDeclarations, List<InferenceVariable> inferenceVariables) {
         if (typeParameterDeclarations.size() != inferenceVariables.size()) {
@@ -78,9 +88,9 @@ public class TypeInferenceAPI {
      * provides no explicit type arguments.
      */
     public boolean invocationApplicabilityInference(MethodCallExpr methodCallExpr, MethodDeclaration methodDeclaration) {
-        if (methodCallExpr.getTypeArguments().isPresent()) {
-            throw new IllegalArgumentException("Type inference unnecessary as type arguments have been specified");
-        }
+//        if (methodCallExpr.getTypeArguments().isPresent()) {
+//            throw new IllegalArgumentException("Type inference unnecessary as type arguments have been specified");
+//        }
 
         // Given a method invocation that provides no explicit type arguments, the process to determine whether a
         // potentially applicable generic method m is applicable is as follows:
@@ -90,16 +100,17 @@ public class TypeInferenceAPI {
 
         List<TypeParameterDeclaration> Ps = methodDeclaration.getTypeParameters();
         List<InferenceVariable> alphas = InferenceVariable.instantiate(Ps.size());
-        Substitution omega = Substitution.empty();
+        Substitution theta = Substitution.empty();
         for (int i=0;i<Ps.size();i++) {
-            omega = omega.addPair(Ps.get(0), alphas.get(0));
+            theta = theta.addPair(Ps.get(0), alphas.get(0));
         }
 
         // - An initial bound set, B0, is constructed from the declared bounds of P1, ..., Pp, as described in §18.1.3.
 
         BoundSet B0 = boundSetup(Ps, alphas);
 
-        // - For all i (1 ≤ i ≤ p), if Pi appears in the throws clause of m, then the bound throws αi is implied. These bounds, if any, are incorporated with B0 to produce a new bound set, B1.
+        // - For all i (1 ≤ i ≤ p), if Pi appears in the throws clause of m, then the bound throws αi is implied.
+        //   These bounds, if any, are incorporated with B0 to produce a new bound set, B1.
 
         BoundSet B1 = B0;
         for (int i=0;i<Ps.size();i++) {
@@ -123,7 +134,7 @@ public class TypeInferenceAPI {
 
 
         if (!C.isPresent()) {
-            C = testForApplicabilityByStrictInvocation();
+            C = testForApplicabilityByStrictInvocation(Fs, es, theta);
         }
 
         //   - To test for applicability by loose invocation:
@@ -158,15 +169,122 @@ public class TypeInferenceAPI {
         return instantiation.allInferenceVariablesAreResolved(B2);
     }
 
-    private Optional<ConstraintFormulaSet> testForApplicabilityByStrictInvocation() {
+    private boolean isImplicitlyTyped(LambdaExpr lambdaExpr) {
+        return lambdaExpr.getParameters().stream().anyMatch(p -> p.getType() instanceof UnknownType);
+    }
+
+    private boolean isInexact(MethodReferenceExpr methodReferenceExpr) {
+        throw new UnsupportedOperationException();
+    }
+
+    private boolean isPertinentToApplicability(Expression argument) {
+        // An argument expression is considered pertinent to applicability for a potentially applicable method m
+        // unless it has one of the following forms:
+        //
+        // - An implicitly typed lambda expression (§15.27.1).
+
+        if (argument instanceof LambdaExpr) {
+            LambdaExpr lambdaExpr = (LambdaExpr)argument;
+            if (isImplicitlyTyped(lambdaExpr)) {
+                return false;
+            }
+        }
+
+        // - An inexact method reference expression (§15.13.1).
+
+        if (argument instanceof MethodReferenceExpr) {
+            MethodReferenceExpr methodReferenceExpr = (MethodReferenceExpr)argument;
+            if (isInexact(methodReferenceExpr)) {
+                return false;
+            }
+        }
+
+        // - If m is a generic method and the method invocation does not provide explicit type arguments, an
+        //   explicitly typed lambda expression or an exact method reference expression for which the
+        //   corresponding target type (as derived from the signature of m) is a type parameter of m.
+
+        if (argument instanceof LambdaExpr) {
+            throw new UnsupportedOperationException();
+        }
+
+        if (argument instanceof MethodReferenceExpr) {
+            throw new UnsupportedOperationException();
+        }
+
+        // - An explicitly typed lambda expression whose body is an expression that is not pertinent to applicability.
+
+        if (argument instanceof LambdaExpr) {
+            throw new UnsupportedOperationException();
+        }
+
+        // - An explicitly typed lambda expression whose body is a block, where at least one result expression is not
+        //   pertinent to applicability.
+
+        if (argument instanceof LambdaExpr) {
+            throw new UnsupportedOperationException();
+        }
+
+        // - A parenthesized expression (§15.8.5) whose contained expression is not pertinent to applicability.
+
+        if (argument instanceof EnclosedExpr) {
+            EnclosedExpr enclosedExpr = (EnclosedExpr)argument;
+            return isPertinentToApplicability(enclosedExpr.getInner());
+        }
+
+        // - A conditional expression (§15.25) whose second or third operand is not pertinent to applicability.
+
+        if (argument instanceof ConditionalExpr) {
+            ConditionalExpr conditionalExpr = (ConditionalExpr)argument;
+            return isPertinentToApplicability(conditionalExpr.getThenExpr()) &&
+                    isPertinentToApplicability(conditionalExpr.getElseExpr());
+        }
+
+        return true;
+    }
+
+    private Optional<ConstraintFormulaSet> testForApplicabilityByStrictInvocation(List<Type> Fs, List<Expression> es,
+                                                                                  Substitution theta) {
+        int n = Fs.size();
+        int k = es.size();
+
         // If k ≠ n, or if there exists an i (1 ≤ i ≤ n) such that ei is pertinent to applicability (§15.12.2.2)
-        // and either i) ei is a standalone expression of a primitive type but Fi is a reference type,
-        // or ii) Fi is a primitive type but ei is not a standalone expression of a primitive type;
+        // and either:
+        // i) ei is a standalone expression of a primitive type but Fi is a reference type, or
+        // ii) Fi is a primitive type but ei is not a standalone expression of a primitive type;
+        if (k != n) {
+            return Optional.empty();
+        }
+        for (int i=0;i<n;i++) {
+            Expression ei = es.get(i);
+            Type fi = Fs.get(i);
+            if (isPertinentToApplicability(ei)) {
+                if (isStandaloneExpression(ei) && JavaParserFacade.get(typeSolver).getType(ei).isPrimitive()
+                        && fi.isReferenceType()) {
+                    return Optional.empty();
+                }
+                if (fi.isPrimitive() && (!isStandaloneExpression(ei) || !JavaParserFacade.get(typeSolver).getType(ei).isPrimitive())) {
+                    return Optional.empty();
+                }
+            }
+        }
         // then the method is not applicable and there is no need to proceed with inference.
         //
         // Otherwise, C includes, for all i (1 ≤ i ≤ k) where ei is pertinent to applicability, ‹ei → Fi θ›.
 
-        throw new UnsupportedOperationException();
+        ConstraintFormulaSet constraintFormulaSet = ConstraintFormulaSet.empty();
+        for (int i=0;i<k;i++) {
+            Expression ei = es.get(i);
+            Type fi = Fs.get(i);
+            Type fiTheta = typeWithSubstitution(fi, theta);
+            constraintFormulaSet = constraintFormulaSet.addConstraint(
+                    new ExpressionCompatibleWithType(typeSolver, ei, fiTheta));
+        }
+
+        return Optional.of(constraintFormulaSet);
+    }
+
+    private Type typeWithSubstitution(Type originalType, Substitution substitution) {
+        return substitution.apply(originalType);
     }
 
     private Optional<ConstraintFormulaSet> testForApplicabilityByLooseInvocation() {
