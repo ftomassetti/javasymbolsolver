@@ -254,7 +254,57 @@ public class MethodCallExprContext extends AbstractJavaParserContext<MethodCallE
     private Optional<MethodUsage> solveMethodAsUsageUsingTypeInference(ReferenceType refType, MethodCallExpr methodCallExpr,
                                                      TypeSolver typeSolver,
                                                      Context invokationContext) {
-        throw new UnsupportedOperationException();
+        Optional<MethodUsage> ref = ContextHelper.solveMethodAsUsageUsingTypeInference(refType.getTypeDeclaration(), methodCallExpr, typeSolver, invokationContext, refType.typeParametersValues());
+//        if (ref.isPresent()) {
+//            MethodUsage methodUsage = ref.get();
+//
+//            methodUsage = resolveMethodTypeParametersFromExplicitList(typeSolver, methodUsage);
+//
+//            // At this stage I should derive from the context and the value some information on the type parameters
+//            // for example, when calling:
+//            // myStream.collect(Collectors.toList())
+//            // I should be able to figure out that considering the type of the stream (e.g., Stream<String>)
+//            // and considering that Stream has this method:
+//            //
+//            // <R,A> R collect(Collector<? super T,A,R> collector)
+//            //
+//            // and collector has this method:
+//            //
+//            // static <T> Collector<T,?,List<T>>   toList()
+//            //
+//            // In this case collect.R has to be equal to List<toList.T>
+//            // And toList.T has to be equal to ? super Stream.T
+//            // Therefore R has to be equal to List<? super Stream.T>.
+//            // In our example Stream.T equal to String, so the R (and the result of the call to collect) is
+//            // List<? super String>
+//
+//            Map<TypeParameterDeclaration, Type> derivedValues = new HashMap<>();
+//            for (int i = 0; i < methodUsage.getParamTypes().size(); i++) {
+//                ParameterDeclaration parameter = methodUsage.getDeclaration().getParam(i);
+//                Type parameterType = parameter.getType();
+//                if (parameter.isVariadic()) {
+//                    parameterType = parameterType.asArrayType().getComponentType();
+//                }
+//                inferTypes(argumentsTypes.get(i), parameterType, derivedValues);
+//            }
+//
+//            for (Map.Entry<TypeParameterDeclaration, Type> entry : derivedValues.entrySet()){
+//                methodUsage = methodUsage.replaceTypeParameter(entry.getKey(), entry.getValue());
+//            }
+//
+//            Type returnType = refType.useThisTypeParametersOnTheGivenType(methodUsage.returnType());
+//            if (returnType != methodUsage.returnType()) {
+//                methodUsage = methodUsage.replaceReturnType(returnType);
+//            }
+//            for (int i = 0; i < methodUsage.getParamTypes().size(); i++) {
+//                Type replaced = refType.useThisTypeParametersOnTheGivenType(methodUsage.getParamTypes().get(i));
+//                methodUsage = methodUsage.replaceParamType(i, replaced);
+//            }
+//            return Optional.of(methodUsage);
+//        } else {
+//            return ref;
+//        }
+        return ref;
     }
 
     @Deprecated

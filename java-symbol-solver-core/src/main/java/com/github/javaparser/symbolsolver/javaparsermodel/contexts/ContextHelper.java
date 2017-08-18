@@ -16,6 +16,7 @@
 
 package com.github.javaparser.symbolsolver.javaparsermodel.contexts;
 
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.core.resolution.Context;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserEnumDeclaration;
@@ -43,6 +44,33 @@ public class ContextHelper {
         // prevent instantiation
     }
 
+
+    public static Optional<MethodUsage> solveMethodAsUsageUsingTypeInference(TypeDeclaration typeDeclaration,
+                                                                             MethodCallExpr methodCall, TypeSolver typeSolver,
+                                                                             Context invokationContext, List<Type> typeParameters) {
+        if (typeDeclaration instanceof JavassistClassDeclaration) {
+            // return ((JavassistClassDeclaration) typeDeclaration).solveMethodAsUsage(name, argumentsTypes, typeSolver, invokationContext, typeParameters);
+        } else if (typeDeclaration instanceof JavassistInterfaceDeclaration) {
+            // return ((JavassistInterfaceDeclaration) typeDeclaration).solveMethodAsUsage(name, argumentsTypes, typeSolver, invokationContext, typeParameters);
+        } else if (typeDeclaration instanceof JavassistEnumDeclaration) {
+            // return ((JavassistEnumDeclaration) typeDeclaration).solveMethodAsUsage(name, argumentsTypes, typeSolver, invokationContext, typeParameters);
+        } else if (typeDeclaration instanceof ReflectionClassDeclaration) {
+            // return ((ReflectionClassDeclaration) typeDeclaration).solveMethodAsUsage(name, argumentsTypes, typeSolver, invokationContext, typeParameters);
+        } else if (typeDeclaration instanceof ReflectionInterfaceDeclaration) {
+            // return ((ReflectionInterfaceDeclaration) typeDeclaration).solveMethodAsUsage(name, argumentsTypes, typeSolver, invokationContext, typeParameters);
+        } else if (typeDeclaration instanceof ReflectionEnumDeclaration) {
+            // return ((ReflectionEnumDeclaration) typeDeclaration).solveMethodAsUsage(name, argumentsTypes, typeSolver, invokationContext, typeParameters);
+        } else if (typeDeclaration instanceof JavaParserClassDeclaration) {
+            return ((JavaParserClassDeclaration) typeDeclaration).getContext().solveMethodAsUsageUsingTypeInference(methodCall, typeSolver);
+        } else if (typeDeclaration instanceof JavaParserInterfaceDeclaration) {
+            // return ((JavaParserInterfaceDeclaration) typeDeclaration).getContext().solveMethodAsUsage(name, argumentsTypes, typeSolver);
+        } else if (typeDeclaration instanceof JavaParserEnumDeclaration) {
+            // return ((JavaParserEnumDeclaration) typeDeclaration).getContext().solveMethodAsUsage(name, argumentsTypes, typeSolver);
+        }
+        throw new UnsupportedOperationException(typeDeclaration.toString());
+    }
+
+    @Deprecated
     public static Optional<MethodUsage> solveMethodAsUsage(TypeDeclaration typeDeclaration, String name,
                                                            List<Type> argumentsTypes, TypeSolver typeSolver,
                                                            Context invokationContext, List<Type> typeParameters) {
