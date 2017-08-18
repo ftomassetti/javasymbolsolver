@@ -332,6 +332,23 @@ public class ContextTest extends AbstractTest {
     }
 
     @Test
+    public void resolveGenericReturnTypeOfMethodInJarUsingTypeInference() throws ParseException, IOException {
+        CompilationUnit cu = parseSample("Navigator");
+        com.github.javaparser.ast.body.ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "Navigator");
+        MethodDeclaration method = Navigator.demandMethod(clazz, "findType");
+        MethodCallExpr call = Navigator.findMethodCall(method, "getTypes");
+
+        String pathToJar = adaptPath("src/test/resources/javaparser-core-2.1.0.jar");
+        TypeSolver typeSolver = new CombinedTypeSolver(new ReflectionTypeSolver(), new JarTypeSolver(pathToJar));
+        MethodUsage methodUsage = JavaParserFacade.get(typeSolver).solveMethodAsUsageUsingTypeInference(call);
+
+        assertEquals("getTypes", methodUsage.getName());
+        assertEquals("java.util.List<com.github.javaparser.ast.body.TypeDeclaration>", methodUsage.returnType().describe());
+        assertEquals(1, methodUsage.returnType().asReferenceType().typeParametersValues().size());
+        assertEquals("com.github.javaparser.ast.body.TypeDeclaration", methodUsage.returnType().asReferenceType().typeParametersValues().get(0).describe());
+    }
+
+    @Test
     public void resolveTypeUsageOfFirstMethodInGenericClass() throws ParseException, IOException {
         CompilationUnit cu = parseSample("Navigator");
         com.github.javaparser.ast.body.ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "Navigator");
@@ -415,6 +432,21 @@ public class ContextTest extends AbstractTest {
         String pathToJar = adaptPath("src/test/resources/javaparser-core-2.1.0.jar");
         TypeSolver typeSolver = new CombinedTypeSolver(new ReflectionTypeSolver(), new JarTypeSolver(pathToJar));
         MethodUsage methodUsage = JavaParserFacade.get(typeSolver).solveMethodAsUsage(callToGetName);
+
+        assertEquals("getName", methodUsage.getName());
+        assertEquals("com.github.javaparser.ast.body.TypeDeclaration", methodUsage.declaringType().getQualifiedName());
+    }
+
+    @Test
+    public void resolveReferenceToCallOnLambdaParamUsingTypeInference() throws ParseException, IOException {
+        CompilationUnit cu = parseSample("Navigator");
+        com.github.javaparser.ast.body.ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "Navigator");
+        MethodDeclaration method = Navigator.demandMethod(clazz, "findType");
+        MethodCallExpr callToGetName = Navigator.findMethodCall(method, "getName");
+
+        String pathToJar = adaptPath("src/test/resources/javaparser-core-2.1.0.jar");
+        TypeSolver typeSolver = new CombinedTypeSolver(new ReflectionTypeSolver(), new JarTypeSolver(pathToJar));
+        MethodUsage methodUsage = JavaParserFacade.get(typeSolver).solveMethodAsUsageUsingTypeInference(callToGetName);
 
         assertEquals("getName", methodUsage.getName());
         assertEquals("com.github.javaparser.ast.body.TypeDeclaration", methodUsage.declaringType().getQualifiedName());
