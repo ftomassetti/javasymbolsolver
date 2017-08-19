@@ -132,4 +132,8 @@ public class ReflectionMethodDeclaration implements MethodDeclaration {
         return ReflectionFactory.modifiersToAccessLevel(this.method.getModifiers());
     }
 
+    @Override
+    public int getNumberOfSpecifiedExceptions() {
+        return this.method.getExceptionTypes().length;
+    }
 }

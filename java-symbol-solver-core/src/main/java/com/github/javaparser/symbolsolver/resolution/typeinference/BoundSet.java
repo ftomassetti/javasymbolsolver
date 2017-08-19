@@ -810,4 +810,8 @@ public class BoundSet {
         }
         return false;
     }
+
+    public List<Bound> getProperUpperBoundsFor(InferenceVariable inferenceVariable) {
+        return bounds.stream().filter(b -> b.isProperUpperBoundFor(inferenceVariable).isPresent()).collect(Collectors.toList());
+    }
 }

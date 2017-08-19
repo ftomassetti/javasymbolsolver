@@ -70,8 +70,20 @@ public class TypeInference {
                 // in the set; if this results in no proper upper bounds for αl (only dependencies), then the
                 // bound αl <: Object also appears in the set.
 
-                throw new UnsupportedOperationException();
+                for (TypeParameterDeclaration.Bound bound : Pl.getBounds(typeSolver)) {
+                    Type T = bound.getType();
+                    Substitution substitution = Substitution.empty();
+                    for (int j=0;j<typeParameterDeclarations.size();j++) {
+                        substitution = substitution.withPair(typeParameterDeclarations.get(j), inferenceVariables.get(j));
+                    }
+                    Type TWithSubstitutions = substitution.apply(T);
 
+                    boundSet = boundSet.withBound(new SubtypeOfBound(alphaL, TWithSubstitutions));
+
+                    if (boundSet.getProperUpperBoundsFor(alphaL).isEmpty()) {
+                        boundSet = boundSet.withBound(new SubtypeOfBound(alphaL, object));
+                    }
+                }
             }
         }
 
