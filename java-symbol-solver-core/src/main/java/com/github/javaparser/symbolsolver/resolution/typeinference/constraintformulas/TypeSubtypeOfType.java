@@ -33,7 +33,11 @@ public class TypeSubtypeOfType extends ConstraintFormula {
         // - If S and T are proper types, the constraint reduces to true if S is a subtype of T (§4.10), and false otherwise.
 
         if (isProperType(S) && isProperType(T)) {
-            throw new UnsupportedOperationException();
+            if (T.isAssignableBy(S)) {
+                return ReductionResult.trueResult();
+            } else {
+                return ReductionResult.falseResult();
+            }
         }
 
         // - Otherwise, if S is the null type, the constraint reduces to true.
