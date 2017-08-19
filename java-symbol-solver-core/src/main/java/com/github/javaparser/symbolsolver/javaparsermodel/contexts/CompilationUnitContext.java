@@ -262,6 +262,45 @@ public class CompilationUnitContext extends AbstractJavaParserContext<Compilatio
         return SymbolReference.unsolved(MethodDeclaration.class);
     }
 
+    @Override
+    public SymbolReference<MethodDeclaration> solveMethod(MethodCallExpr methodCall, boolean staticOnly, TypeSolver typeSolver) {
+        String name = methodCall.getNameAsString();
+        for (ImportDeclaration importDecl : wrappedNode.getImports()) {
+            if(importDecl.isStatic()){
+                if(importDecl.isAsterisk()){
+                    String importString = importDecl.getNameAsString();
+
+                    if (this.wrappedNode.getPackageDeclaration().isPresent()
+                            && this.wrappedNode.getPackageDeclaration().get().getName().getIdentifier().equals(packageName(importString))
+                            && this.wrappedNode.getTypes().stream().anyMatch(it -> it.getName().getIdentifier().equals(toSimpleName(importString)))) {
+                        // We are using a static import on a type defined in this file. It means the value was not found at
+                        // a lower level so this will fail
+                        return SymbolReference.unsolved(MethodDeclaration.class);
+                    }
+
+                    com.github.javaparser.symbolsolver.model.declarations.TypeDeclaration ref = typeSolver.solveType(importString);
+                    SymbolReference<MethodDeclaration> method = MethodResolutionLogic.solveMethodInType(ref, methodCall, true, typeSolver);
+
+                    if (method.isSolved()) {
+                        return method;
+                    }
+                } else{
+                    String qName = importDecl.getNameAsString();
+
+                    if (qName.equals(name) || qName.endsWith("." + name)) {
+                        String typeName = getType(qName);
+                        com.github.javaparser.symbolsolver.model.declarations.TypeDeclaration ref = typeSolver.solveType(typeName);
+                        SymbolReference<MethodDeclaration> method = MethodResolutionLogic.solveMethodInType(ref, methodCall, true, typeSolver);
+                        if (method.isSolved()) {
+                            return method;
+                        }
+                    }
+                }
+            }
+        }
+        return SymbolReference.unsolved(MethodDeclaration.class);
+    }
+
     ///
     /// Private methods
     ///
