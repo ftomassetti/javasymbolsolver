@@ -1,6 +1,7 @@
 package com.github.javaparser.symbolsolver.javaparsermodel.contexts;
 
 import com.github.javaparser.ast.NodeList;
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithTypeArguments;
 import com.github.javaparser.ast.type.TypeParameter;
@@ -95,6 +96,60 @@ public class AnonymousClassDeclarationContext extends AbstractJavaParserContext<
                                                     name,
                                                     argumentsTypes,
                                                     typeSolver);
+  }
+
+  @Override
+  public SymbolReference<MethodDeclaration> solveMethod(MethodCallExpr methodCall, boolean staticOnly, TypeSolver typeSolver) {
+    String name = methodCall.getNameAsString();
+    List<MethodDeclaration> candidateMethods =
+            myDeclaration
+                    .getDeclaredMethods()
+                    .stream()
+                    .filter(m -> m.getName().equals(name) && (!staticOnly || m.isStatic()))
+                    .collect(Collectors.toList());
+
+    if (!Object.class.getCanonicalName().equals(myDeclaration.getQualifiedName())) {
+      for (ReferenceType ancestor : myDeclaration.getAncestors()) {
+        SymbolReference<MethodDeclaration> res =
+                MethodResolutionLogic.solveMethodInTypeUsingTypeInference(ancestor.getTypeDeclaration(),
+                        methodCall,
+                        staticOnly,
+                        typeSolver);
+        // consider methods from superclasses and only default methods from interfaces :
+        // not true, we should keep abstract as a valid candidate
+        // abstract are removed in MethodResolutionLogic.isApplicable is necessary
+        if (res.isSolved()) {
+          candidateMethods.add(res.getCorrespondingDeclaration());
+        }
+      }
+    }
+
+    // We want to avoid infinite recursion when a class is using its own method
+    // see issue #75
+    if (candidateMethods.isEmpty()) {
+      SymbolReference<MethodDeclaration> parentSolution =
+              getParent().solveMethod(methodCall, staticOnly, typeSolver);
+      if (parentSolution.isSolved()) {
+        candidateMethods.add(parentSolution.getCorrespondingDeclaration());
+      }
+    }
+
+    // if is interface and candidate method list is empty, we should check the Object Methods
+    if (candidateMethods.isEmpty() && myDeclaration.getSuperTypeDeclaration().isInterface()) {
+      SymbolReference<MethodDeclaration> res =
+              MethodResolutionLogic.solveMethodInTypeUsingTypeInference(new ReflectionClassDeclaration(Object.class,
+                              typeSolver),
+                      methodCall,
+                      false,
+                      typeSolver);
+      if (res.isSolved()) {
+        candidateMethods.add(res.getCorrespondingDeclaration());
+      }
+    }
+
+    return MethodResolutionLogic.findMostApplicableUsingTypeInference(candidateMethods,
+            methodCall,
+            typeSolver);
   }
 
   @Override

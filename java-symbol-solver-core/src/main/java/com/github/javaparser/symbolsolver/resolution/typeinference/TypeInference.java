@@ -53,13 +53,15 @@ public class TypeInference {
         }
     }
 
-
     ///
     /// Public instance methods
     ///
 
-
     public Optional<InstantiationSet> instantiationInference(MethodCallExpr methodCallExpr, MethodDeclaration methodDeclaration) {
+        return instantiationInference(methodCallExpr.getArguments(), methodDeclaration);
+    }
+
+    public Optional<InstantiationSet> instantiationInference(List<Expression> argumentExpressions, MethodDeclaration methodDeclaration) {
 //        if (methodCallExpr.getTypeArguments().isPresent()) {
 //            throw new IllegalArgumentException("Type inference unnecessary as type arguments have been specified");
 //        }
@@ -98,7 +100,7 @@ public class TypeInference {
         //   of the invocation. Then:
 
         List<Type> Fs = formalParameterTypes(methodDeclaration);
-        List<Expression> es = methodCallExpr.getArguments();
+        List<Expression> es = argumentExpressions;
 
         Optional<ConstraintFormulaSet> C = Optional.empty();
 
