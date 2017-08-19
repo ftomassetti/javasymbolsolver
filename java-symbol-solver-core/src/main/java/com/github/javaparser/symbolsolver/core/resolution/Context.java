@@ -87,6 +87,13 @@ public interface Context {
     SymbolReference<MethodDeclaration> solveMethod(String name, List<Type> argumentsTypes, boolean staticOnly, TypeSolver typeSolver);
 
     /**
+     * We find the method declaration which is the best match for the given call.
+     */
+    default SymbolReference<MethodDeclaration> solveMethod(MethodCallExpr methodCall, boolean staticOnly, TypeSolver typeSolver) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
      * Similar to solveMethod but we return a MethodUsage. A MethodUsage corresponds to a MethodDeclaration plus the
      * resolved type variables.
      */
