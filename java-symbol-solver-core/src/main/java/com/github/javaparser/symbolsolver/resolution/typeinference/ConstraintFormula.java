@@ -82,7 +82,7 @@ public abstract class ConstraintFormula {
 
         public ConstraintFormula getConstraint(int index) {
             if (constraintFormulas.size() <= index) {
-                throw new IllegalArgumentException("Constaint with index " + index + " is not available as there are " + constraintFormulas.size() + " constraints");
+                throw new IllegalArgumentException("Constraint with index " + index + " is not available as there are " + constraintFormulas.size() + " constraints");
             }
             return constraintFormulas.get(index);
         }
