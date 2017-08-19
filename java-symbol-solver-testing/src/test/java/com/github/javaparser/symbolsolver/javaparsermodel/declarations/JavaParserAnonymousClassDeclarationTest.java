@@ -19,6 +19,7 @@ import org.junit.Test;
 public class JavaParserAnonymousClassDeclarationTest extends AbstractResolutionTest {
 
   @Test
+  @Deprecated
   public void anonymousClassAsMethodArgument() throws Exception {
     CompilationUnit cu = parseSample("AnonymousClassDeclarations");
     ClassOrInterfaceDeclaration aClass = Navigator.demandClass(cu, "AnonymousClassDeclarations");

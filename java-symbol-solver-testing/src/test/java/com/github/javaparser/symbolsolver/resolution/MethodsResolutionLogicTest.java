@@ -16,7 +16,15 @@
 
 package com.github.javaparser.symbolsolver.resolution;
 
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.symbolsolver.javaparser.Navigator;
+import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
+import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFactory;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
+import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserMethodDeclaration;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.model.methods.MethodUsage;
 import com.github.javaparser.symbolsolver.model.typesystem.ReferenceType;
@@ -30,7 +38,9 @@ import org.junit.Test;
 
 import java.io.File;
 
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 public class MethodsResolutionLogicTest extends AbstractResolutionTest {
 
@@ -44,6 +54,22 @@ public class MethodsResolutionLogicTest extends AbstractResolutionTest {
         combinedTypeSolverNewCode.add(new JavaParserTypeSolver(srcNewCode));
         combinedTypeSolverNewCode.add(new JavaParserTypeSolver(adaptPath(new File("src/test/resources/javaparser_new_src/javaparser-generated-sources"))));
         typeSolver = combinedTypeSolverNewCode;
+    }
+
+    @Test
+    public void anonymousClassAsMethodArgumentUsingTypeInference() throws Exception {
+        CompilationUnit cu = parseSample("AnonymousClassDeclarations");
+        ClassOrInterfaceDeclaration aClass = Navigator.demandClass(cu, "AnonymousClassDeclarations");
+        MethodDeclaration method = Navigator.demandMethod(aClass, "fooBar1");
+        MethodCallExpr methodCall = Navigator.findMethodCall(method, "of");
+
+        CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
+        combinedTypeSolver.add(new ReflectionTypeSolver());
+
+        MethodDeclaration jpMethodDeclaration = Navigator.demandClass(cu, "AnonymousClassDeclarations.ParDo").getMethodsByName("of").get(0);
+        com.github.javaparser.symbolsolver.model.declarations.MethodDeclaration methodDeclaration =
+                new JavaParserMethodDeclaration(jpMethodDeclaration, combinedTypeSolver);
+        assertEquals(true, MethodResolutionLogic.isApplicable(methodDeclaration, methodCall, combinedTypeSolver));
     }
 
     @Test
