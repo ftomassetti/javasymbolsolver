@@ -17,7 +17,6 @@
 package com.github.javaparser.symbolsolver.model.declarations;
 
 import com.github.javaparser.symbolsolver.model.typesystem.ReferenceType;
-import com.github.javaparser.symbolsolver.model.typesystem.Type;
 
 import java.util.Optional;
 
