@@ -77,7 +77,7 @@ public class MethodCallExprContext extends AbstractJavaParserContext<MethodCallE
     }
 
     @Override
-    public Optional<MethodUsage> solveMethodAsUsageUsingTypeInference(MethodCallExpr call, TypeSolver typeSolver) {
+    public Optional<MethodUsage> solveMethodAsUsage(MethodCallExpr call, TypeSolver typeSolver) {
         if (wrappedNode.getScope().isPresent()) {
             Expression scope = wrappedNode.getScope().get();
             // Consider static method calls
@@ -121,7 +121,7 @@ public class MethodCallExprContext extends AbstractJavaParserContext<MethodCallE
             while (parentContext instanceof MethodCallExprContext) {
                 parentContext = parentContext.getParent();
             }
-            return parentContext.solveMethodAsUsageUsingTypeInference(call, typeSolver);
+            return parentContext.solveMethodAsUsage(call, typeSolver);
         }
     }
 

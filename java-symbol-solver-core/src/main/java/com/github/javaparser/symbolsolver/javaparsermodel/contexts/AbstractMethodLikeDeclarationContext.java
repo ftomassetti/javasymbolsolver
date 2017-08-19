@@ -94,6 +94,7 @@ public abstract class AbstractMethodLikeDeclarationContext
     }
 
     @Override
+    @Deprecated
     public final SymbolReference<MethodDeclaration> solveMethod(
             String name, List<Type> argumentsTypes, boolean staticOnly, TypeSolver typeSolver) {
         return getParent().solveMethod(name, argumentsTypes, false, typeSolver);
