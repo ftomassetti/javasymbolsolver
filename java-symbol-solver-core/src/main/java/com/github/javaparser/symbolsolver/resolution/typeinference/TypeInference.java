@@ -154,9 +154,21 @@ public class TypeInference {
         if (!partial.isPresent()) {
             return false;
         }
+        int nActualParams = methodCallExpr.getArguments().size();
+        int nFormalParams = methodDeclaration.getNumberOfParams();
+        if (nActualParams != nFormalParams) {
+            if (methodDeclaration.hasVariadicParameter()) {
+                if (nActualParams < (nFormalParams - 1)) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
         //MethodUsage methodUsage = instantiationSetToMethodUsage(methodDeclaration, partial.get());
-        for (int i=0;i<methodDeclaration.getNumberOfParams();i++) {
-            Type formalType = methodDeclaration.getParam(i).getType();
+        for (int i=0;i<nActualParams;i++) {
+            int formalIndex = i >= nFormalParams ? nFormalParams - 1 : i;
+            Type formalType = methodDeclaration.getParam(formalIndex).getType();
             Type actualType = JavaParserFacade.get(typeSolver).getType(methodCallExpr.getArgument(i));
             if (!formalType.isAssignableBy(actualType)) {
                 return false;

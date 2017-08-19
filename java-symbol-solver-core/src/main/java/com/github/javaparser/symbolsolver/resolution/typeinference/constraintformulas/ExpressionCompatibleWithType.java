@@ -9,10 +9,7 @@ import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import com.github.javaparser.symbolsolver.logic.FunctionalInterfaceLogic;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
-import com.github.javaparser.symbolsolver.resolution.typeinference.BoundSet;
-import com.github.javaparser.symbolsolver.resolution.typeinference.ConstraintFormula;
-import com.github.javaparser.symbolsolver.resolution.typeinference.MethodType;
-import com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper;
+import com.github.javaparser.symbolsolver.resolution.typeinference.*;
 import com.github.javaparser.utils.Pair;
 
 import java.util.LinkedList;
@@ -183,7 +180,19 @@ public class ExpressionCompatibleWithType extends ConstraintFormula {
                         //         - If R is a proper type, and if the lambda body or some result expression in the lambda body
                         //           is not compatible in an assignment context with R, then false.
 
-                        throw new UnsupportedOperationException();
+                        if (lambdaExpr.getBody() instanceof BlockStmt) {
+                            List<Expression> resultExpressions = ExpressionHelper.getResultExpressions((BlockStmt)lambdaExpr.getBody());
+                            for (Expression e : resultExpressions) {
+                                if (!ExpressionHelper.isCompatibleInAssignmentContext(e, R, typeSolver)) {
+                                    return ReductionResult.falseResult();
+                                }
+                            }
+                        } else {
+                            Expression e = ((ExpressionStmt)lambdaExpr.getBody()).getExpression();
+                            if (!ExpressionHelper.isCompatibleInAssignmentContext(e, R, typeSolver)) {
+                                return ReductionResult.falseResult();
+                            }
+                        }
                     } else {
                         //         - Otherwise, if R is not a proper type, then where the lambda body has the form Expression,
                         //           the constraint ‹Expression → R›; or where the lambda body is a block with result
@@ -244,7 +253,12 @@ public class ExpressionCompatibleWithType extends ConstraintFormula {
         // A block lambda body is value-compatible if it cannot complete normally (§14.21) and every return statement
         // in the block has the form return Expression;.
 
-        throw new UnsupportedOperationException();
+        if (statement instanceof BlockStmt) {
+            BlockStmt blockStmt = (BlockStmt)statement;
+            throw new UnsupportedOperationException();
+        } else {
+            return false;
+        }
     }
 
     @Override

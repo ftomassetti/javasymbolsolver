@@ -1,7 +1,13 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference;
 
 import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.type.UnknownType;
+import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
+import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
+import com.github.javaparser.symbolsolver.model.typesystem.Type;
+
+import java.util.List;
 
 /**
  * @author Federico Tomassetti
@@ -52,5 +58,13 @@ public class ExpressionHelper {
 
     public static boolean isExplicitlyTyped(LambdaExpr lambdaExpr) {
         return lambdaExpr.getParameters().stream().allMatch(p -> !(p.getType() instanceof UnknownType));
+    }
+
+    public static List<Expression> getResultExpressions(BlockStmt blockStmt) {
+        throw new UnsupportedOperationException();
+    }
+
+    public static boolean isCompatibleInAssignmentContext(Expression expression, Type type, TypeSolver typeSolver) {
+        return type.isAssignableBy(JavaParserFacade.get(typeSolver).getType(expression));
     }
 }
