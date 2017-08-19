@@ -165,6 +165,9 @@ public interface TypeParameterDeclaration extends TypeDeclaration {
      */
     List<Bound> getBounds(TypeSolver typeSolver);
 
+    /**
+     * Has the type parameter a lower bound?
+     */
     default boolean hasLowerBound(TypeSolver typeSolver) {
         for (Bound b : getBounds(typeSolver)) {
             if (b.isExtends()) {
@@ -174,9 +177,40 @@ public interface TypeParameterDeclaration extends TypeDeclaration {
         return false;
     }
 
+    /**
+     * Has the type parameter an upper bound?
+     */
+    default boolean hasUpperBound(TypeSolver typeSolver) {
+        for (Bound b : getBounds(typeSolver)) {
+            if (b.isSuper()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get the type used as lower bound.
+     *
+     * @throws IllegalStateException if there is no lower bound
+     */
     default Type getLowerBound(TypeSolver typeSolver) {
         for (Bound b : getBounds(typeSolver)) {
             if (b.isExtends()) {
+                return b.getType();
+            }
+        }
+        throw new IllegalStateException();
+    }
+
+    /**
+     * Get the type used as upper bound.
+     *
+     * @throws IllegalStateException if there is no upper bound
+     */
+    default Type getUpperBound(TypeSolver typeSolver) {
+        for (Bound b : getBounds(typeSolver)) {
+            if (b.isSuper()) {
                 return b.getType();
             }
         }

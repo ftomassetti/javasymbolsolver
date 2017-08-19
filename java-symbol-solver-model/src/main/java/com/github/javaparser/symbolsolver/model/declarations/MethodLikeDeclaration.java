@@ -123,11 +123,16 @@ public interface MethodLikeDeclaration extends Declaration, TypeParametrizable, 
         return declaringType().findTypeParameter(name);
     }
 
-    default int getNumberOfSpecifiedExceptions() {
-        throw new UnsupportedOperationException(this.getClass().getCanonicalName());
-    }
+    /**
+     * Number of exceptions listed in the throws clause.
+     */
+    int getNumberOfSpecifiedExceptions();
 
-    default ReferenceType getSpecifiedException(int index) {
-        throw new UnsupportedOperationException();
-    }
+    /**
+     * Type of the corresponding entry in the throws clause.
+     *
+     * @throws IllegalArgumentException if the index is equal or greater than the value returned by
+     *                                  getNumberOfSpecifiedExceptions
+     */
+    ReferenceType getSpecifiedException(int index);
 }

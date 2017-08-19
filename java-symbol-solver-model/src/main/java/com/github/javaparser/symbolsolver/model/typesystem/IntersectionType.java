@@ -1,7 +1,13 @@
 package com.github.javaparser.symbolsolver.model.typesystem;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
+/**
+ * An intersection type is defined in java as list of types separates by ampersands.
+ *
+ * @author Federico Tomassetti
+ */
 public class IntersectionType implements Type {
     private List<Type> elements;
 
@@ -29,11 +35,11 @@ public class IntersectionType implements Type {
 
     @Override
     public String describe() {
-        throw new UnsupportedOperationException();
+        return String.join(" & ", elements.stream().map(e -> e.describe()).collect(Collectors.toList()));
     }
 
     @Override
     public boolean isAssignableBy(Type other) {
-        throw new UnsupportedOperationException();
+        return elements.stream().allMatch(e -> e.isAssignableBy(other));
     }
 }

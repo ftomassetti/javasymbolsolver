@@ -155,6 +155,6 @@ public class JavaParserMethodDeclaration implements MethodDeclaration {
 
     @Override
     public ReferenceType getSpecifiedException(int index) {
-        throw new UnsupportedOperationException();
+        return JavaParserFacade.get(typeSolver).convert(wrappedNode.getThrownExceptions().get(index), wrappedNode).asReferenceType();
     }
 }
