@@ -21,6 +21,7 @@ import com.github.javaparser.symbolsolver.declarations.common.MethodDeclarationC
 import com.github.javaparser.symbolsolver.model.declarations.*;
 import com.github.javaparser.symbolsolver.model.methods.MethodUsage;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
+import com.github.javaparser.symbolsolver.model.typesystem.ReferenceType;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 
 import java.lang.reflect.Method;
@@ -135,5 +136,13 @@ public class ReflectionMethodDeclaration implements MethodDeclaration {
     @Override
     public int getNumberOfSpecifiedExceptions() {
         return this.method.getExceptionTypes().length;
+    }
+
+    @Override
+    public ReferenceType getSpecifiedException(int index) {
+        if (index >= getNumberOfSpecifiedExceptions()) {
+            throw new IllegalArgumentException();
+        }
+        return ReflectionFactory.typeUsageFor(this.method.getExceptionTypes()[index], typeSolver).asReferenceType();
     }
 }
