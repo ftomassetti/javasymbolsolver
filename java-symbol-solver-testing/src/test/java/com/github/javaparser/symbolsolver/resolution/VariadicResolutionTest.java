@@ -71,6 +71,20 @@ public class VariadicResolutionTest extends AbstractResolutionTest {
     }
 
     @Test
+    public void methodCallWithReferenceTypeAsVaridicArgumentIsSolvedUsingTypeInference() throws ParseException {
+        CompilationUnit cu = parseSample("MethodCalls");
+        ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "MethodCalls");
+
+        MethodDeclaration method = Navigator.demandMethod(clazz, "variadicMethod");
+        MethodCallExpr callExpr = Navigator.findMethodCall(method, "variadicMethod");
+
+        TypeSolver typeSolver = new ReflectionTypeSolver();
+        JavaParserFacade javaParserFacade = JavaParserFacade.get(typeSolver);
+        MethodUsage callee = javaParserFacade.solveMethodAsUsageUsingTypeInference(callExpr);
+        assertEquals("variadicMethod", callee.getName());
+    }
+
+    @Test
     public void resolveVariadicMethodWithGenericArgument() throws ParseException {
         CompilationUnit cu = parseSample("MethodCalls");
         ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "MethodCalls");
@@ -81,6 +95,20 @@ public class VariadicResolutionTest extends AbstractResolutionTest {
         TypeSolver typeSolver = new ReflectionTypeSolver();
         JavaParserFacade javaParserFacade = JavaParserFacade.get(typeSolver);
         MethodUsage callee = javaParserFacade.solveMethodAsUsage(callExpr);
+        assertEquals("variadicWithGenericArg", callee.getName());
+    }
+
+    @Test
+    public void resolveVariadicMethodWithGenericArgumentUsingTypeInference() throws ParseException {
+        CompilationUnit cu = parseSample("MethodCalls");
+        ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "MethodCalls");
+
+        MethodDeclaration method = Navigator.demandMethod(clazz, "genericMethodTest");
+        MethodCallExpr callExpr = Navigator.findMethodCall(method, "variadicWithGenericArg");
+
+        TypeSolver typeSolver = new ReflectionTypeSolver();
+        JavaParserFacade javaParserFacade = JavaParserFacade.get(typeSolver);
+        MethodUsage callee = javaParserFacade.solveMethodAsUsageUsingTypeInference(callExpr);
         assertEquals("variadicWithGenericArg", callee.getName());
     }
 
@@ -98,6 +126,24 @@ public class VariadicResolutionTest extends AbstractResolutionTest {
         JavaParserFacade javaParserFacade = JavaParserFacade.get(typeSolver);
         MethodUsage call1 = javaParserFacade.solveMethodAsUsage(calls.get(0));
         MethodUsage call2 = javaParserFacade.solveMethodAsUsage(calls.get(1));
+        assertEquals("int", call1.returnType().describe());
+        assertEquals("void", call2.returnType().describe());
+    }
+
+    @Test
+    public void selectMostSpecificVariadicUsingTypeInference() throws ParseException {
+        CompilationUnit cu = parseSample("MethodCalls");
+        ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "MethodCalls");
+
+        MethodDeclaration method = Navigator.demandMethod(clazz, "variadicTest");
+        List<MethodCallExpr> calls = method.getNodesByType(MethodCallExpr.class);
+
+        File src = adaptPath(new File("src/test/resources"));
+        TypeSolver typeSolver = new CombinedTypeSolver(new ReflectionTypeSolver(), new JavaParserTypeSolver(src));
+
+        JavaParserFacade javaParserFacade = JavaParserFacade.get(typeSolver);
+        MethodUsage call1 = javaParserFacade.solveMethodAsUsageUsingTypeInference(calls.get(0));
+        MethodUsage call2 = javaParserFacade.solveMethodAsUsageUsingTypeInference(calls.get(1));
         assertEquals("int", call1.returnType().describe());
         assertEquals("void", call2.returnType().describe());
     }
