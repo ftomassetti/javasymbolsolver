@@ -43,6 +43,35 @@ import java.util.stream.Collectors;
  */
 class ReflectionMethodResolutionLogic {
 
+    static SymbolReference<MethodDeclaration> solveMethod(MethodCallExpr methodCall, boolean staticOnly,
+                                                          TypeSolver typeSolver, ReferenceTypeDeclaration scopeType,
+                                                          Class clazz){
+        String name = methodCall.getNameAsString();
+        List<MethodDeclaration> methods = new ArrayList<>();
+        Predicate<Method> staticOnlyCheck = m -> !staticOnly || (staticOnly && Modifier.isStatic(m.getModifiers()));
+        for (Method method : clazz.getMethods()) {
+            if (method.isBridge() || method.isSynthetic() || !method.getName().equals(name)|| !staticOnlyCheck.test(method)) continue;
+            MethodDeclaration methodDeclaration = new ReflectionMethodDeclaration(method, typeSolver);
+            methods.add(methodDeclaration);
+        }
+
+        for (ReferenceType ancestor : scopeType.getAncestors()) {
+            SymbolReference<MethodDeclaration> ref = MethodResolutionLogic.solveMethodInType(ancestor.getTypeDeclaration(), methodCall, staticOnly, typeSolver);
+            if (ref.isSolved()) {
+                methods.add(ref.getCorrespondingDeclaration());
+            }
+        }
+
+        if (scopeType.getAncestors().isEmpty()){
+            ReferenceTypeImpl objectClass = new ReferenceTypeImpl(new ReflectionClassDeclaration(Object.class, typeSolver), typeSolver);
+            SymbolReference<MethodDeclaration> ref = MethodResolutionLogic.solveMethodInType(objectClass.getTypeDeclaration(), methodCall, staticOnly, typeSolver);
+            if (ref.isSolved()) {
+                methods.add(ref.getCorrespondingDeclaration());
+            }
+        }
+        return MethodResolutionLogic.findMostApplicable(methods, methodCall, typeSolver);
+    }
+
     @Deprecated
     static SymbolReference<MethodDeclaration> solveMethod(String name, List<Type> parameterTypes, boolean staticOnly,
                                                           TypeSolver typeSolver, ReferenceTypeDeclaration scopeType,

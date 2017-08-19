@@ -44,7 +44,7 @@ public class ExpressionHelper {
             throw new UnsupportedOperationException(expression.toString());
         }
         if (expression instanceof LambdaExpr) {
-            throw new UnsupportedOperationException(expression.toString());
+            return true;
         }
         return false;
     }
