@@ -1,7 +1,10 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference.constraintformulas;
 
 import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.stmt.BlockStmt;
+import com.github.javaparser.ast.stmt.ExpressionStmt;
 import com.github.javaparser.ast.stmt.Statement;
+import com.github.javaparser.ast.type.UnknownType;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import com.github.javaparser.symbolsolver.logic.FunctionalInterfaceLogic;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
@@ -152,7 +155,8 @@ public class ExpressionCompatibleWithType extends ConstraintFormula {
                 //     - If the function type's result is not void and the lambda body is a block that is not
                 //       value-compatible, the constraint reduces to false.
 
-                if (!targetFunctionType.getReturnType().isVoid() && isNonValueCompatibleBlock(lambdaExpr.getBody())) {
+                if (!targetFunctionType.getReturnType().isVoid() && lambdaExpr.getBody() instanceof BlockStmt
+                        && !isValueCompatibleBlock(lambdaExpr.getBody())) {
                     return ReductionResult.falseResult();
                 }
 
@@ -161,18 +165,38 @@ public class ExpressionCompatibleWithType extends ConstraintFormula {
 
                 //       - If the lambda parameters have explicitly declared types F1, ..., Fn and the function type
                 //         has parameter types G1, ..., Gn, then i) for all i (1 ≤ i ≤ n), ‹Fi = Gi›, and ii) ‹T' <: T›.
-                //
+
+                boolean hasExplicitlyDeclaredTypes = lambdaExpr.getParameters().stream().anyMatch(p -> !(p.getType() instanceof UnknownType));
+                if (hasExplicitlyDeclaredTypes) {
+                    throw new UnsupportedOperationException();
+                }
+
                 //       - If the function type's return type is a (non-void) type R, assume the lambda's parameter
                 //         types are the same as the function type's parameter types. Then:
-                //
-                //         - If R is a proper type, and if the lambda body or some result expression in the lambda body
-                //           is not compatible in an assignment context with R, then false.
-                //
-                //         - Otherwise, if R is not a proper type, then where the lambda body has the form Expression,
-                //           the constraint ‹Expression → R›; or where the lambda body is a block with result
-                //           expressions e1, ..., em, for all i (1 ≤ i ≤ m), ‹ei → R›.
 
-                if (true) throw new UnsupportedOperationException();
+                if (!targetFunctionType.getReturnType().isVoid()) {
+
+                    Type R = targetFunctionType.getReturnType();
+
+                    if (TypeHelper.isProperType(R)) {
+
+                        //         - If R is a proper type, and if the lambda body or some result expression in the lambda body
+                        //           is not compatible in an assignment context with R, then false.
+
+                        throw new UnsupportedOperationException();
+                    } else {
+                        //         - Otherwise, if R is not a proper type, then where the lambda body has the form Expression,
+                        //           the constraint ‹Expression → R›; or where the lambda body is a block with result
+                        //           expressions e1, ..., em, for all i (1 ≤ i ≤ m), ‹ei → R›.
+
+                        if (lambdaExpr.getBody() instanceof BlockStmt) {
+                            throw new UnsupportedOperationException();
+                        } else {
+                            Expression e = ((ExpressionStmt)lambdaExpr.getBody()).getExpression();
+                            constraints.add(new ExpressionCompatibleWithType(typeSolver, e, R));
+                        }
+                    }
+                }
 
                 return ReductionResult.withConstraints(constraints);
             }
@@ -216,7 +240,10 @@ public class ExpressionCompatibleWithType extends ConstraintFormula {
         throw new RuntimeException("This should not happen");
     }
 
-    private boolean isNonValueCompatibleBlock(Statement statement) {
+    private boolean isValueCompatibleBlock(Statement statement) {
+        // A block lambda body is value-compatible if it cannot complete normally (§14.21) and every return statement
+        // in the block has the form return Expression;.
+
         throw new UnsupportedOperationException();
     }
 
