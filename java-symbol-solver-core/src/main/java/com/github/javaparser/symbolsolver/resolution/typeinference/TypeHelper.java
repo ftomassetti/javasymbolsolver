@@ -45,6 +45,9 @@ public class TypeHelper {
             // FIXME I am not sure...
             return false;
         }
+        if (type.isArray()) {
+            return isProperType(type.asArrayType().getComponentType());
+        }
         throw new UnsupportedOperationException(type.toString());
     }
 
