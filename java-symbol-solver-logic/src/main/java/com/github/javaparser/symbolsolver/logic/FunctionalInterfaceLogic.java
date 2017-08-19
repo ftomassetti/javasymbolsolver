@@ -37,6 +37,10 @@ public final class FunctionalInterfaceLogic {
         // prevent instantiation
     }
 
+    public static boolean isFunctionalInterfaceType(Type type) {
+        return getFunctionalMethod(type).isPresent();
+    }
+
     /**
      * Get the functional method defined by the type, if any.
      */
@@ -82,4 +86,5 @@ public final class FunctionalInterfaceLogic {
     private static boolean declaredOnObject(MethodUsage m) {
         return OBJECT_METHODS_SIGNATURES.contains(m.getDeclaration().getSignature());
     }
+
 }

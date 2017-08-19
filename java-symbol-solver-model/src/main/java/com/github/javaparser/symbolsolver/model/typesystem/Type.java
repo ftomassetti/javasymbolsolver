@@ -19,6 +19,7 @@ package com.github.javaparser.symbolsolver.model.typesystem;
 import com.github.javaparser.symbolsolver.model.declarations.TypeParameterDeclaration;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -164,5 +165,9 @@ public interface Type {
      * This method checks if ThisType t = new OtherType() would compile.
      */
     boolean isAssignableBy(Type other);
+
+    default boolean mention(List<TypeParameterDeclaration> typeParameters) {
+        throw new UnsupportedOperationException(this.getClass().getCanonicalName());
+    }
 
 }

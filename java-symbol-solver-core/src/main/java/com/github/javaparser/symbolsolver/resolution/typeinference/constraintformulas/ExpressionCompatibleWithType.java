@@ -1,11 +1,19 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference.constraintformulas;
 
 import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
+import com.github.javaparser.symbolsolver.logic.FunctionalInterfaceLogic;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.resolution.typeinference.BoundSet;
 import com.github.javaparser.symbolsolver.resolution.typeinference.ConstraintFormula;
+import com.github.javaparser.symbolsolver.resolution.typeinference.MethodType;
+import com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper;
+import com.github.javaparser.utils.Pair;
+
+import java.util.LinkedList;
+import java.util.List;
 
 import static com.github.javaparser.symbolsolver.resolution.typeinference.ExpressionHelper.isPolyExpression;
 import static com.github.javaparser.symbolsolver.resolution.typeinference.ExpressionHelper.isStandaloneExpression;
@@ -93,37 +101,64 @@ public class ExpressionCompatibleWithType extends ConstraintFormula {
             // A constraint formula of the form ‹LambdaExpression → T›, where T mentions at least one inference variable, is reduced as follows:
 
             if (expression instanceof LambdaExpr) {
+                LambdaExpr lambdaExpr = (LambdaExpr)expression;
 
                 // - If T is not a functional interface type (§9.8), the constraint reduces to false.
-                //
+
+                if (!FunctionalInterfaceLogic.isFunctionalInterfaceType(T)) {
+                    return ReductionResult.falseResult();
+                }
+
                 // - Otherwise, let T' be the ground target type derived from T, as specified in §15.27.3. If §18.5.3
                 //   is used to derive a functional interface type which is parameterized, then the test that
                 //   F<A'1, ..., A'm> is a subtype of F<A1, ..., Am> is not performed (instead, it is asserted with a
                 //   constraint formula below). Let the target function type for the lambda expression be the
                 //   function type of T'. Then:
-                //
+
+                Pair<Type, Boolean> result = TypeHelper.groundTargetTypeOfLambda(lambdaExpr, T, typeSolver);
+                Type TFirst = result.a;
+                MethodType targetFunctionType = TypeHelper.getFunctionType(TFirst);
+                if (result.b) {
+                    throw new UnsupportedOperationException();
+                }
+
                 //   - If no valid function type can be found, the constraint reduces to false.
+                //
+                //     Federico: THIS SHOULD NOT HAPPEN, IN CASE WE WILL THROW AN EXCEPTION
                 //
                 //   - Otherwise, the congruence of LambdaExpression with the target function type is asserted as
                 //     follows:
                 //
                 //     - If the number of lambda parameters differs from the number of parameter types of the function
                 //       type, the constraint reduces to false.
-                //
+
+                if (targetFunctionType.getFormalArgumentTypes().size() != lambdaExpr.getParameters().size()) {
+                    return ReductionResult.falseResult();
+                }
+
                 //     - If the lambda expression is implicitly typed and one or more of the function type's parameter
                 //       types is not a proper type, the constraint reduces to false.
                 //
                 //       This condition never arises in practice, due to the handling of implicitly typed lambda
                 //       expressions in §18.5.1 and the substitution applied to the target type in §18.5.2.
-                //
+
                 //     - If the function type's result is void and the lambda body is neither a statement expression
                 //       nor a void-compatible block, the constraint reduces to false.
-                //
+
+                if (targetFunctionType.getReturnType().isVoid()) {
+                    throw new UnsupportedOperationException();
+                }
+
                 //     - If the function type's result is not void and the lambda body is a block that is not
                 //       value-compatible, the constraint reduces to false.
-                //
+
+                if (!targetFunctionType.getReturnType().isVoid() && isNonValueCompatibleBlock(lambdaExpr.getBody())) {
+                    return ReductionResult.falseResult();
+                }
+
                 //     - Otherwise, the constraint reduces to all of the following constraint formulas:
-                //
+                List<ConstraintFormula> constraints = new LinkedList<>();
+
                 //       - If the lambda parameters have explicitly declared types F1, ..., Fn and the function type
                 //         has parameter types G1, ..., Gn, then i) for all i (1 ≤ i ≤ n), ‹Fi = Gi›, and ii) ‹T' <: T›.
                 //
@@ -137,7 +172,9 @@ public class ExpressionCompatibleWithType extends ConstraintFormula {
                 //           the constraint ‹Expression → R›; or where the lambda body is a block with result
                 //           expressions e1, ..., em, for all i (1 ≤ i ≤ m), ‹ei → R›.
 
-                throw new UnsupportedOperationException();
+                if (true) throw new UnsupportedOperationException();
+
+                return ReductionResult.withConstraints(constraints);
             }
 
             // A constraint formula of the form ‹MethodReference → T›, where T mentions at least one inference variable, is reduced as follows:
@@ -177,6 +214,10 @@ public class ExpressionCompatibleWithType extends ConstraintFormula {
         }
 
         throw new RuntimeException("This should not happen");
+    }
+
+    private boolean isNonValueCompatibleBlock(Statement statement) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

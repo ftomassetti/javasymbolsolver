@@ -92,13 +92,17 @@ public abstract class ConstraintFormula {
         }
 
         public static ReductionResult withConstraints(ConstraintFormula... constraints) {
-            ReductionResult reductionResult = new ReductionResult();
-            reductionResult.constraintFormulas.addAll(Arrays.asList(constraints));
-            return reductionResult;
+            return withConstraints(Arrays.asList(constraints));
         }
 
         public static ReductionResult oneBound(Bound bound) {
             return empty().withBound(bound);
+        }
+
+        public static ReductionResult withConstraints(List<ConstraintFormula> constraints) {
+            ReductionResult reductionResult = new ReductionResult();
+            reductionResult.constraintFormulas.addAll(constraints);
+            return reductionResult;
         }
     }
 

@@ -14,9 +14,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.isInferenceVariable;
-import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.isProperType;
-import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.leastUpperBound;
+import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.*;
 
 /**
  * @author Federico Tomassetti
@@ -783,19 +781,6 @@ public class BoundSet {
             }
         }
         return selected;
-    }
-
-    /**
-     * See JLS 5.1.10. Capture Conversion.
-     */
-    private Type glb(Set<Type> types) {
-        if (types.size() == 0) {
-            throw new IllegalArgumentException();
-        }
-        if (types.size() == 1) {
-            return types.iterator().next();
-        }
-        return new IntersectionType(types);
     }
 
     private boolean properUpperBoundsAreAtMostExceptionThrowableAndObject(InferenceVariable inferenceVariable) {
