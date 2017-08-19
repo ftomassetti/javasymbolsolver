@@ -51,19 +51,19 @@ public class ContextHelper {
         if (typeDeclaration instanceof JavassistClassDeclaration) {
             return ((JavassistClassDeclaration) typeDeclaration).solveMethodAsUsageUsingTypeInference(methodCall, typeSolver, invokationContext, typeParameters);
         } else if (typeDeclaration instanceof JavassistInterfaceDeclaration) {
-            return ((JavassistInterfaceDeclaration) typeDeclaration).solveMethodAsUsageUsingTypeInference(methodCall, typeSolver, invokationContext, typeParameters);
+            return ((JavassistInterfaceDeclaration) typeDeclaration).solveMethodAsUsage(methodCall, typeSolver, invokationContext, typeParameters);
         } else if (typeDeclaration instanceof JavassistEnumDeclaration) {
-            // return ((JavassistEnumDeclaration) typeDeclaration).solveMethodAsUsage(name, argumentsTypes, typeSolver, invokationContext, typeParameters);
+            return ((JavassistEnumDeclaration) typeDeclaration).solveMethodAsUsage(methodCall, typeSolver, invokationContext, typeParameters);
         } else if (typeDeclaration instanceof ReflectionClassDeclaration) {
             return ((ReflectionClassDeclaration) typeDeclaration).solveMethodAsUsageUsingTypeInference(methodCall, typeSolver, invokationContext, typeParameters);
         } else if (typeDeclaration instanceof ReflectionInterfaceDeclaration) {
             return ((ReflectionInterfaceDeclaration) typeDeclaration).solveMethodAsUsageUsingTypeInference(methodCall, typeSolver, invokationContext, typeParameters);
         } else if (typeDeclaration instanceof ReflectionEnumDeclaration) {
-            // return ((ReflectionEnumDeclaration) typeDeclaration).solveMethodAsUsage(name, argumentsTypes, typeSolver, invokationContext, typeParameters);
+            return ((ReflectionEnumDeclaration) typeDeclaration).solveMethodAsUsage(methodCall, typeSolver, invokationContext, typeParameters);
         } else if (typeDeclaration instanceof JavaParserClassDeclaration) {
             return ((JavaParserClassDeclaration) typeDeclaration).getContext().solveMethodAsUsage(methodCall, typeSolver);
         } else if (typeDeclaration instanceof JavaParserInterfaceDeclaration) {
-            // return ((JavaParserInterfaceDeclaration) typeDeclaration).getContext().solveMethodAsUsage(name, argumentsTypes, typeSolver);
+            return ((JavaParserInterfaceDeclaration) typeDeclaration).getContext().solveMethodAsUsage(methodCall, typeSolver);
         } else if (typeDeclaration instanceof JavaParserEnumDeclaration) {
             return ((JavaParserEnumDeclaration) typeDeclaration).getContext().solveMethodAsUsage(methodCall, typeSolver);
         }

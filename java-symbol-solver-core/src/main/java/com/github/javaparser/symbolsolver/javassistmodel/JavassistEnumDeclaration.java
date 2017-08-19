@@ -16,6 +16,7 @@
 
 package com.github.javaparser.symbolsolver.javassistmodel;
 
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.core.resolution.Context;
 import com.github.javaparser.symbolsolver.logic.AbstractTypeDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.*;
@@ -192,8 +193,13 @@ public class JavassistEnumDeclaration extends AbstractTypeDeclaration implements
         return MethodResolutionLogic.findMostApplicable(candidates, name, argumentsTypes, typeSolver);
     }
 
+    @Deprecated
     public Optional<MethodUsage> solveMethodAsUsage(String name, List<Type> argumentsTypes, TypeSolver typeSolver, Context invokationContext, List<Type> typeParameterValues) {
         return JavassistUtils.getMethodUsage(ctClass, name, argumentsTypes, typeSolver, invokationContext);
+    }
+
+    public Optional<MethodUsage> solveMethodAsUsage(MethodCallExpr methodCall, TypeSolver typeSolver, Context invokationContext, List<Type> typeParameterValues) {
+        return JavassistUtils.getMethodUsageUsingTypeInference(ctClass, methodCall, typeSolver, invokationContext);
     }
 
     @Override

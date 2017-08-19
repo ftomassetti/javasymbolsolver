@@ -95,9 +95,8 @@ public class JavassistInterfaceDeclaration extends AbstractTypeDeclaration imple
         return ctClass.getName().replace('$', '.');
     }
 
-    @Deprecated
-    public Optional<MethodUsage> solveMethodAsUsageUsingTypeInference(MethodCallExpr methodCall, TypeSolver typeSolver,
-                                                                      Context invokationContext, List<Type> typeParameterValues) {
+    public Optional<MethodUsage> solveMethodAsUsage(MethodCallExpr methodCall, TypeSolver typeSolver,
+                                                    Context invokationContext, List<Type> typeParameterValues) {
 
         return JavassistUtils.getMethodUsageUsingTypeInference(ctClass, methodCall, typeSolver, invokationContext);
     }
