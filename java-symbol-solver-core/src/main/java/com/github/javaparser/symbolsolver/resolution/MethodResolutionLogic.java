@@ -174,7 +174,8 @@ public class MethodResolutionLogic {
     public static SymbolReference<MethodDeclaration> findMostApplicable(List<MethodDeclaration> methods,
                                                                         MethodCallExpr methodCall,
                                                                         TypeSolver typeSolver) {
-        List<MethodDeclaration> applicableMethods = getMethodsWithoutDuplicates(methods).stream().filter((m) -> isApplicable(m, methodCall, typeSolver)).collect(Collectors.toList());
+        List<MethodDeclaration> applicableMethods = getMethodsWithoutDuplicates(methods).stream()
+                .filter((m) -> isApplicable(m, methodCall, typeSolver)).collect(Collectors.toList());
         if (applicableMethods.isEmpty()) {
             return SymbolReference.unsolved(MethodDeclaration.class);
         }

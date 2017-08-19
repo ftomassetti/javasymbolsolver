@@ -270,7 +270,7 @@ public class TypeExtractor extends DefaultVisitorAdapter {
     public Type visit(MethodCallExpr node, Boolean solveLambdas) {
         logger.finest("getType on method call " + node);
         // first solve the method
-        MethodUsage ref = facade.solveMethodAsUsage(node);
+        MethodUsage ref = facade.solveMethodAsUsageUsingTypeInference(node);
         logger.finest("getType on method call " + node + " resolved to " + ref);
         logger.finest("getType on method call " + node + " return type is " + ref.returnType());
         return ref.returnType();

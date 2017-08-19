@@ -84,6 +84,6 @@ public class ExpressionHelper {
     }
 
     public static boolean isCompatibleInAssignmentContext(Expression expression, Type type, TypeSolver typeSolver) {
-        return type.isAssignableBy(JavaParserFacade.get(typeSolver).getType(expression));
+        return type.isAssignableBy(JavaParserFacade.get(typeSolver).getType(expression, false));
     }
 }
