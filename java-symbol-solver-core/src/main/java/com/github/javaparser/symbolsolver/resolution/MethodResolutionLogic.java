@@ -66,10 +66,7 @@ public class MethodResolutionLogic {
         return variadicValues.get(0);
     }
 
-    public static boolean isApplicable(MethodDeclaration method, String name, List<Type> argumentsTypes, TypeSolver typeSolver) {
-        return isApplicable(method, name, argumentsTypes, typeSolver, false);
-    }
-
+    @Deprecated
     private static boolean isApplicable(MethodDeclaration method, String name, List<Type> argumentsTypes, TypeSolver typeSolver, boolean withWildcardTolerance) {
         if (!method.getName().equals(name)) {
             return false;
@@ -142,6 +139,90 @@ public class MethodResolutionLogic {
             }
         }
         return !withWildcardTolerance || needForWildCardTolerance;
+    }
+
+    public static boolean isApplicableUsingTypeInference(MethodDeclaration method, MethodCallExpr methodCallExpr, TypeSolver typeSolver) {
+        TypeInference typeInference = new TypeInference(typeSolver);
+        return typeInference.invocationApplicabilityInference(methodCallExpr, method);
+    }
+
+    @Deprecated
+    public static boolean isApplicable(MethodUsage method, String name, List<Type> argumentsTypes, TypeSolver typeSolver) {
+        if (!method.getName().equals(name)) {
+            return false;
+        }
+        // TODO Consider varargs
+        if (method.getNoParams() != argumentsTypes.size()) {
+            return false;
+        }
+        for (int i = 0; i < method.getNoParams(); i++) {
+            Type expectedType = method.getParamType(i);
+            Type expectedTypeWithoutSubstitutions = expectedType;
+            Type expectedTypeWithInference = method.getParamType(i);
+            Type actualType = argumentsTypes.get(i);
+
+            List<TypeParameterDeclaration> typeParameters = method.getDeclaration().getTypeParameters();
+            typeParameters.addAll(method.declaringType().getTypeParameters());
+
+            if (expectedType.describe().equals(actualType.describe())){
+                return true;
+            }
+
+            Map<TypeParameterDeclaration, Type> derivedValues = new HashMap<>();
+            for (int j = 0; j < method.getParamTypes().size(); j++) {
+                ParameterDeclaration parameter = method.getDeclaration().getParam(i);
+                Type parameterType = parameter.getType();
+                if (parameter.isVariadic()) {
+                    parameterType = parameterType.asArrayType().getComponentType();
+                }
+                inferTypes(argumentsTypes.get(j), parameterType, derivedValues);
+            }
+
+            for (Map.Entry<TypeParameterDeclaration, Type> entry : derivedValues.entrySet()){
+                TypeParameterDeclaration tp = entry.getKey();
+                expectedTypeWithInference = expectedTypeWithInference.replaceTypeVariables(tp, entry.getValue());
+            }
+
+            for (TypeParameterDeclaration tp : typeParameters) {
+                if (tp.getBounds(typeSolver).isEmpty()) {
+                    //expectedType = expectedType.replaceTypeVariables(tp.getName(), new ReferenceTypeUsageImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver));
+                    expectedType = expectedType.replaceTypeVariables(tp, Wildcard.extendsBound(new ReferenceTypeImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver)));
+                } else if (tp.getBounds(typeSolver).size() == 1) {
+                    TypeParameterDeclaration.Bound bound = tp.getBounds(typeSolver).get(0);
+                    if (bound.isExtends()) {
+                        //expectedType = expectedType.replaceTypeVariables(tp.getName(), bound.getType());
+                        expectedType = expectedType.replaceTypeVariables(tp, Wildcard.extendsBound(bound.getType()));
+                    } else {
+                        //expectedType = expectedType.replaceTypeVariables(tp.getName(), new ReferenceTypeUsageImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver));
+                        expectedType = expectedType.replaceTypeVariables(tp, Wildcard.superBound(bound.getType()));
+                    }
+                } else {
+                    throw new UnsupportedOperationException();
+                }
+            }
+            Type expectedType2 = expectedTypeWithoutSubstitutions;
+            for (TypeParameterDeclaration tp : typeParameters) {
+                if (tp.getBounds(typeSolver).isEmpty()) {
+                    expectedType2 = expectedType2.replaceTypeVariables(tp, new ReferenceTypeImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver));
+                } else if (tp.getBounds(typeSolver).size() == 1) {
+                    TypeParameterDeclaration.Bound bound = tp.getBounds(typeSolver).get(0);
+                    if (bound.isExtends()) {
+                        expectedType2 = expectedType2.replaceTypeVariables(tp, bound.getType());
+                    } else {
+                        expectedType2 = expectedType2.replaceTypeVariables(tp, new ReferenceTypeImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver));
+                    }
+                } else {
+                    throw new UnsupportedOperationException();
+                }
+            }
+            if (!expectedType.isAssignableBy(actualType)
+                    && !expectedType2.isAssignableBy(actualType)
+                    && !expectedTypeWithInference.isAssignableBy(actualType)
+                    && !expectedTypeWithoutSubstitutions.isAssignableBy(actualType)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static boolean isAssignableMatchTypeParameters(Type expected, Type actual,
@@ -263,89 +344,6 @@ public class MethodResolutionLogic {
         } else {
             throw new UnsupportedOperationException("Replacing " + type + ", param " + tp + " with " + type.getClass().getCanonicalName());
         }
-    }
-
-    public static boolean isApplicableUsingTypeInference(MethodDeclaration method, MethodCallExpr methodCallExpr, TypeSolver typeSolver) {
-        TypeInference typeInference = new TypeInference(typeSolver);
-        return typeInference.invocationApplicabilityInference(methodCallExpr, method);
-    }
-
-    public static boolean isApplicable(MethodUsage method, String name, List<Type> argumentsTypes, TypeSolver typeSolver) {
-        if (!method.getName().equals(name)) {
-            return false;
-        }
-        // TODO Consider varargs
-        if (method.getNoParams() != argumentsTypes.size()) {
-            return false;
-        }
-        for (int i = 0; i < method.getNoParams(); i++) {
-            Type expectedType = method.getParamType(i);
-            Type expectedTypeWithoutSubstitutions = expectedType;
-            Type expectedTypeWithInference = method.getParamType(i);
-            Type actualType = argumentsTypes.get(i);
-
-            List<TypeParameterDeclaration> typeParameters = method.getDeclaration().getTypeParameters();
-            typeParameters.addAll(method.declaringType().getTypeParameters());
-
-            if (expectedType.describe().equals(actualType.describe())){
-                return true;
-            }
-
-            Map<TypeParameterDeclaration, Type> derivedValues = new HashMap<>();
-            for (int j = 0; j < method.getParamTypes().size(); j++) {
-                ParameterDeclaration parameter = method.getDeclaration().getParam(i);
-                Type parameterType = parameter.getType();
-                if (parameter.isVariadic()) {
-                    parameterType = parameterType.asArrayType().getComponentType();
-                }
-                inferTypes(argumentsTypes.get(j), parameterType, derivedValues);
-            }
-
-            for (Map.Entry<TypeParameterDeclaration, Type> entry : derivedValues.entrySet()){
-                TypeParameterDeclaration tp = entry.getKey();
-                expectedTypeWithInference = expectedTypeWithInference.replaceTypeVariables(tp, entry.getValue());
-            }
-
-            for (TypeParameterDeclaration tp : typeParameters) {
-                if (tp.getBounds(typeSolver).isEmpty()) {
-                    //expectedType = expectedType.replaceTypeVariables(tp.getName(), new ReferenceTypeUsageImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver));
-                    expectedType = expectedType.replaceTypeVariables(tp, Wildcard.extendsBound(new ReferenceTypeImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver)));
-                } else if (tp.getBounds(typeSolver).size() == 1) {
-                    TypeParameterDeclaration.Bound bound = tp.getBounds(typeSolver).get(0);
-                    if (bound.isExtends()) {
-                        //expectedType = expectedType.replaceTypeVariables(tp.getName(), bound.getType());
-                        expectedType = expectedType.replaceTypeVariables(tp, Wildcard.extendsBound(bound.getType()));
-                    } else {
-                        //expectedType = expectedType.replaceTypeVariables(tp.getName(), new ReferenceTypeUsageImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver));
-                        expectedType = expectedType.replaceTypeVariables(tp, Wildcard.superBound(bound.getType()));
-                    }
-                } else {
-                    throw new UnsupportedOperationException();
-                }
-            }
-            Type expectedType2 = expectedTypeWithoutSubstitutions;
-            for (TypeParameterDeclaration tp : typeParameters) {
-                if (tp.getBounds(typeSolver).isEmpty()) {
-                    expectedType2 = expectedType2.replaceTypeVariables(tp, new ReferenceTypeImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver));
-                } else if (tp.getBounds(typeSolver).size() == 1) {
-                    TypeParameterDeclaration.Bound bound = tp.getBounds(typeSolver).get(0);
-                    if (bound.isExtends()) {
-                        expectedType2 = expectedType2.replaceTypeVariables(tp, bound.getType());
-                    } else {
-                        expectedType2 = expectedType2.replaceTypeVariables(tp, new ReferenceTypeImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver));
-                    }
-                } else {
-                    throw new UnsupportedOperationException();
-                }
-            }
-            if (!expectedType.isAssignableBy(actualType)
-                    && !expectedType2.isAssignableBy(actualType)
-                    && !expectedTypeWithInference.isAssignableBy(actualType)
-                    && !expectedTypeWithoutSubstitutions.isAssignableBy(actualType)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private static List<MethodDeclaration> getMethodsWithoutDuplicates(List<MethodDeclaration> methods) {
@@ -679,8 +677,6 @@ public class MethodResolutionLogic {
     }
 
     private static void inferTypes(Type source, Type target, Map<TypeParameterDeclaration, Type> mappings) {
-
-
         if (source.equals(target)) {
             return;
         }
