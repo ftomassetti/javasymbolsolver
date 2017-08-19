@@ -158,6 +158,10 @@ public class ReflectionEnumDeclaration extends AbstractTypeDeclaration implement
                 typeSolver, this, clazz);
     }
 
+    public SymbolReference<MethodDeclaration> solveMethod(MethodCallExpr methodCall, boolean staticOnly) {
+        throw new UnsupportedOperationException();
+    }
+
     @Deprecated
     public Optional<MethodUsage> solveMethodAsUsage(String name, List<Type> parameterTypes, TypeSolver typeSolver, Context invokationContext, List<Type> typeParameterValues) {
         Optional<MethodUsage> res = ReflectionMethodResolutionLogic.solveMethodAsUsage(name, parameterTypes, typeSolver, invokationContext,

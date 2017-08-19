@@ -131,6 +131,32 @@ public class ReflectionClassDeclaration extends AbstractClassDeclaration {
         return clazz.getCanonicalName();
     }
 
+    public SymbolReference<MethodDeclaration> solveMethod(MethodCallExpr methodCall, boolean staticOnly) {
+        String name = methodCall.getNameAsString();
+        List<MethodDeclaration> methods = new ArrayList<>();
+        Predicate<Method> staticFilter = m -> !staticOnly || (staticOnly && Modifier.isStatic(m.getModifiers()));
+        for (Method method : Arrays.stream(clazz.getDeclaredMethods()).filter((m) -> m.getName().equals(name)).filter(staticFilter)
+                .sorted(new MethodComparator()).collect(Collectors.toList())) {
+            if (method.isBridge() || method.isSynthetic()) continue;
+            MethodDeclaration methodDeclaration = new ReflectionMethodDeclaration(method, typeSolver);
+            methods.add(methodDeclaration);
+        }
+        if (getSuperClass() != null) {
+            ClassDeclaration superClass = (ClassDeclaration) getSuperClass().getTypeDeclaration();
+            SymbolReference<MethodDeclaration> ref = MethodResolutionLogic.solveMethodInType(superClass, methodCall, staticOnly, typeSolver);
+            if (ref.isSolved()) {
+                methods.add(ref.getCorrespondingDeclaration());
+            }
+        }
+        for (ReferenceType interfaceDeclaration : getInterfaces()) {
+            SymbolReference<MethodDeclaration> ref = MethodResolutionLogic.solveMethodInType(interfaceDeclaration.getTypeDeclaration(), methodCall, staticOnly, typeSolver);
+            if (ref.isSolved()) {
+                methods.add(ref.getCorrespondingDeclaration());
+            }
+        }
+        return MethodResolutionLogic.findMostApplicable(methods, methodCall, typeSolver);
+    }
+
     @Deprecated
     public SymbolReference<MethodDeclaration> solveMethod(String name, List<Type> argumentsTypes, boolean staticOnly) {
         List<MethodDeclaration> methods = new ArrayList<>();

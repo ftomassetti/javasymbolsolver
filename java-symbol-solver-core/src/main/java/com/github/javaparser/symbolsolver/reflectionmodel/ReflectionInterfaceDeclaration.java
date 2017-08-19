@@ -94,6 +94,11 @@ public class ReflectionInterfaceDeclaration extends AbstractTypeDeclaration impl
         return clazz.getCanonicalName();
     }
 
+    public SymbolReference<MethodDeclaration> solveMethod(MethodCallExpr methodCall, boolean staticOnly) {
+        return ReflectionMethodResolutionLogic.solveMethod(methodCall, staticOnly,
+                typeSolver,this, clazz);
+    }
+
     @Deprecated
     public SymbolReference<MethodDeclaration> solveMethod(String name, List<Type> parameterTypes, boolean staticOnly) {
         return ReflectionMethodResolutionLogic.solveMethod(name, parameterTypes, staticOnly,

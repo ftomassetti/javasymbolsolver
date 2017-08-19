@@ -96,31 +96,46 @@ public class ExpressionCompatibleWithType extends ConstraintFormula {
 
                 // - If T is not a functional interface type (§9.8), the constraint reduces to false.
                 //
-                // - Otherwise, let T' be the ground target type derived from T, as specified in §15.27.3. If §18.5.3 is used to derive a functional interface type which is parameterized, then the test that F<A'1, ..., A'm> is a subtype of F<A1, ..., Am> is not performed (instead, it is asserted with a constraint formula below). Let the target function type for the lambda expression be the function type of T'. Then:
+                // - Otherwise, let T' be the ground target type derived from T, as specified in §15.27.3. If §18.5.3
+                //   is used to derive a functional interface type which is parameterized, then the test that
+                //   F<A'1, ..., A'm> is a subtype of F<A1, ..., Am> is not performed (instead, it is asserted with a
+                //   constraint formula below). Let the target function type for the lambda expression be the
+                //   function type of T'. Then:
                 //
                 //   - If no valid function type can be found, the constraint reduces to false.
                 //
-                //   - Otherwise, the congruence of LambdaExpression with the target function type is asserted as follows:
+                //   - Otherwise, the congruence of LambdaExpression with the target function type is asserted as
+                //     follows:
                 //
-                //     - If the number of lambda parameters differs from the number of parameter types of the function type, the constraint reduces to false.
+                //     - If the number of lambda parameters differs from the number of parameter types of the function
+                //       type, the constraint reduces to false.
                 //
-                //     - If the lambda expression is implicitly typed and one or more of the function type's parameter types is not a proper type, the constraint reduces to false.
+                //     - If the lambda expression is implicitly typed and one or more of the function type's parameter
+                //       types is not a proper type, the constraint reduces to false.
                 //
-                //       This condition never arises in practice, due to the handling of implicitly typed lambda expressions in §18.5.1 and the substitution applied to the target type in §18.5.2.
+                //       This condition never arises in practice, due to the handling of implicitly typed lambda
+                //       expressions in §18.5.1 and the substitution applied to the target type in §18.5.2.
                 //
-                //     - If the function type's result is void and the lambda body is neither a statement expression nor a void-compatible block, the constraint reduces to false.
+                //     - If the function type's result is void and the lambda body is neither a statement expression
+                //       nor a void-compatible block, the constraint reduces to false.
                 //
-                //     - If the function type's result is not void and the lambda body is a block that is not value-compatible, the constraint reduces to false.
+                //     - If the function type's result is not void and the lambda body is a block that is not
+                //       value-compatible, the constraint reduces to false.
                 //
                 //     - Otherwise, the constraint reduces to all of the following constraint formulas:
                 //
-                //       - If the lambda parameters have explicitly declared types F1, ..., Fn and the function type has parameter types G1, ..., Gn, then i) for all i (1 ≤ i ≤ n), ‹Fi = Gi›, and ii) ‹T' <: T›.
+                //       - If the lambda parameters have explicitly declared types F1, ..., Fn and the function type
+                //         has parameter types G1, ..., Gn, then i) for all i (1 ≤ i ≤ n), ‹Fi = Gi›, and ii) ‹T' <: T›.
                 //
-                //       - If the function type's return type is a (non-void) type R, assume the lambda's parameter types are the same as the function type's parameter types. Then:
+                //       - If the function type's return type is a (non-void) type R, assume the lambda's parameter
+                //         types are the same as the function type's parameter types. Then:
                 //
-                //         - If R is a proper type, and if the lambda body or some result expression in the lambda body is not compatible in an assignment context with R, then false.
+                //         - If R is a proper type, and if the lambda body or some result expression in the lambda body
+                //           is not compatible in an assignment context with R, then false.
                 //
-                //         - Otherwise, if R is not a proper type, then where the lambda body has the form Expression, the constraint ‹Expression → R›; or where the lambda body is a block with result expressions e1, ..., em, for all i (1 ≤ i ≤ m), ‹ei → R›.
+                //         - Otherwise, if R is not a proper type, then where the lambda body has the form Expression,
+                //           the constraint ‹Expression → R›; or where the lambda body is a block with result
+                //           expressions e1, ..., em, for all i (1 ≤ i ≤ m), ‹ei → R›.
 
                 throw new UnsupportedOperationException();
             }

@@ -176,6 +176,10 @@ public class JavassistClassDeclaration extends AbstractClassDeclaration {
         return ancestors;
     }
 
+    public SymbolReference<MethodDeclaration> solveMethod(MethodCallExpr methodCall, boolean staticOnly) {
+        throw new UnsupportedOperationException();
+    }
+
     @Deprecated
     public SymbolReference<MethodDeclaration> solveMethod(String name, List<Type> argumentsTypes, boolean staticOnly) {
         List<MethodDeclaration> candidates = new ArrayList<>();
