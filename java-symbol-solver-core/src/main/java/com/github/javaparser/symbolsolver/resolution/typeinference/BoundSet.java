@@ -18,6 +18,9 @@ import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHe
 import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.isProperType;
 import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHelper.leastUpperBound;
 
+/**
+ * @author Federico Tomassetti
+ */
 public class BoundSet {
 
     private List<Bound> bounds = new LinkedList<>();

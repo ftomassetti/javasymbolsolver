@@ -8,6 +8,8 @@ import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHe
 
 /**
  * A type argument S is contained by a type argument T
+ *
+ * @author Federico Tomassetti
  */
 public class TypeContainedByType extends ConstraintFormula {
     private Type S;

@@ -8,6 +8,8 @@ import com.github.javaparser.symbolsolver.resolution.typeinference.ConstraintFor
 /**
  * The checked exceptions thrown by the body of the LambdaExpression are declared by the throws clause of the
  * function type derived from T.
+ *
+ * @author Federico Tomassetti
  */
 public class LambdaThrowsCompatibleWithType extends ConstraintFormula {
     private LambdaExpr lambdaExpression;

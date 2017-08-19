@@ -16,6 +16,8 @@ import java.util.*;
  * Assertions that involve inference
  * variables are assertions about every proper type that can be produced by replacing each inference variable with
  * a proper type.
+ *
+ * @author Federico Tomassetti
  */
 public class TypeHelper {
 

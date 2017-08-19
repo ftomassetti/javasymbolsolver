@@ -14,6 +14,8 @@ import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHe
 
 /**
  * A reference type S is a subtype of a reference type T
+ *
+ * @author Federico Tomassetti
  */
 public class TypeSubtypeOfType extends ConstraintFormula {
     private Type S;

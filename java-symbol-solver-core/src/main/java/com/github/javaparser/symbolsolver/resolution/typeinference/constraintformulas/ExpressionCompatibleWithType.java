@@ -14,6 +14,8 @@ import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHe
 
 /**
  * An expression is compatible in a loose invocation context with type T
+ *
+ * @author Federico Tomassetti
  */
 public class ExpressionCompatibleWithType extends ConstraintFormula {
     private TypeSolver typeSolver;

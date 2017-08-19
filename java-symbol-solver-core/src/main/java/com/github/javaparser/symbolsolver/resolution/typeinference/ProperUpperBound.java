@@ -3,7 +3,7 @@ package com.github.javaparser.symbolsolver.resolution.typeinference;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 
 /**
- * Created by federico on 17/08/2017.
+ * @author Federico Tomassetti
  */
 public class ProperUpperBound {
     private InferenceVariable inferenceVariable;

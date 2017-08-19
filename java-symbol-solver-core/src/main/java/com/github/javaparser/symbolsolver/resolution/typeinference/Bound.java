@@ -7,6 +7,8 @@ import java.util.Set;
 
 /**
  * Bound are defined for Inference Variables.
+ *
+ * @author Federico Tomassetti
  */
 public abstract class Bound {
 

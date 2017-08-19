@@ -5,6 +5,9 @@ import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * @author Federico Tomassetti
+ */
 public class ConstraintFormulaSet {
     private List<ConstraintFormula> constraintFormulas;
 
