@@ -83,7 +83,7 @@ class JavassistUtils {
 
         try {
             for (CtClass interfaze : ctClass.getInterfaces()) {
-                Optional<MethodUsage> ref = new JavassistInterfaceDeclaration(interfaze, typeSolver).solveMethodAsUsageUsingTypeInference(methodCall, typeSolver, invokationContext, null);
+                Optional<MethodUsage> ref = new JavassistInterfaceDeclaration(interfaze, typeSolver).solveMethodAsUsage(methodCall, typeSolver, invokationContext, null);
                 if (ref.isPresent()) {
                     return ref;
                 }
