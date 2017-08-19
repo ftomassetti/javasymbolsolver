@@ -18,12 +18,10 @@ package com.github.javaparser.symbolsolver.resolution;
 
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserClassDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.MethodDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.ReferenceTypeDeclaration;
-import com.github.javaparser.symbolsolver.model.declarations.TypeDeclaration;
 import com.github.javaparser.symbolsolver.model.methods.MethodUsage;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.model.typesystem.ReferenceType;
@@ -31,7 +29,6 @@ import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionFactory;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
-import com.google.common.collect.ImmutableList;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -67,7 +64,7 @@ public class MethodsResolutionLogicUsingTypeInferenceTest extends AbstractResolu
         MethodDeclaration methodDeclaration = typeDeclaration.getDeclaredMethods().stream().filter(m -> m.getName().equals("disjoint")).findFirst().get();
         MethodCallExpr methodCallExpr = (MethodCallExpr) cu.getClassByName("A").get().getFields().get(0).getVariables().get(0).getInitializer().get();
 
-        assertEquals(true, MethodResolutionLogic.isApplicableUsingTypeInference(methodDeclaration, methodCallExpr, typeSolver));
+        assertEquals(true, MethodResolutionLogic.isApplicable(methodDeclaration, methodCallExpr, typeSolver));
     }
 
     @Test
@@ -89,7 +86,7 @@ public class MethodsResolutionLogicUsingTypeInferenceTest extends AbstractResolu
         methodCallExpr.addArgument("\"AString\"");
 
         assertEquals(false,
-                MethodResolutionLogic.isApplicableUsingTypeInference(mu.getDeclaration(), methodCallExpr, typeSolver));
+                MethodResolutionLogic.isApplicable(mu.getDeclaration(), methodCallExpr, typeSolver));
     }
 
 }

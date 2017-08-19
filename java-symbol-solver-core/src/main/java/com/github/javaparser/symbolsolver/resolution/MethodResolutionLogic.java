@@ -84,6 +84,7 @@ public class MethodResolutionLogic {
         }
     }
 
+    // USED ONLY IN DEPRECATED METHODS
     /**
      * @param methods        we expect the methods to be ordered such that inherited methods are later in the list
      * @param name
@@ -102,6 +103,7 @@ public class MethodResolutionLogic {
         return findMostApplicable(methods, name, argumentsTypes, typeSolver, true);
     }
 
+    // USED ONLY IN DEPRECATED METHODS
     @Deprecated
     public static SymbolReference<MethodDeclaration> findMostApplicable(List<MethodDeclaration> methods, String name,
                                                                         List<Type> argumentsTypes,
@@ -169,52 +171,10 @@ public class MethodResolutionLogic {
         }
     }
 
-
-    public static Optional<MethodUsage> findMostApplicableUsageUsingTypeInference(List<MethodUsage> methods,
-                                                                                  MethodCallExpr methodCall,
-                                                                                  TypeSolver typeSolver) {
-        List<MethodUsage> applicableMethods = methods.stream().filter((m) -> isApplicableUsingTypeInference(m.getDeclaration(), methodCall, typeSolver)).collect(Collectors.toList());
-
-        if (applicableMethods.isEmpty()) {
-            return Optional.empty();
-        }
-        if (applicableMethods.size() == 1) {
-            return Optional.of(applicableMethods.get(0));
-        } else {
-            MethodUsage winningCandidate = applicableMethods.get(0);
-            for (int i = 1; i < applicableMethods.size(); i++) {
-                MethodUsage other = applicableMethods.get(i);
-                if (isMoreSpecific(winningCandidate, other, typeSolver)) {
-                    // nothing to do
-                } else if (isMoreSpecific(other, winningCandidate, typeSolver)) {
-                    winningCandidate = other;
-                } else {
-                    if (winningCandidate.declaringType().getQualifiedName().equals(other.declaringType().getQualifiedName())) {
-                        if (!areOverride(winningCandidate, other)) {
-                            throw new MethodAmbiguityException("Ambiguous method call: cannot find a most applicable method: " + winningCandidate + ", " + other + ". First declared in " + winningCandidate.declaringType().getQualifiedName());
-                        }
-                    } else {
-                        // we expect the methods to be ordered such that inherited methods are later in the list
-                        //throw new UnsupportedOperationException();
-                    }
-                }
-            }
-            return Optional.of(winningCandidate);
-        }
-    }
-
-    public static SymbolReference<MethodDeclaration> findMostApplicableUsingTypeInference(List<MethodDeclaration> methods,
-                                                                                          MethodCallExpr methodCall,
-                                                                                          TypeSolver typeSolver) {
-        return findMostApplicableUsingTypeInference(methods, methodCall, typeSolver, false);
-    }
-
-
-    public static SymbolReference<MethodDeclaration> findMostApplicableUsingTypeInference(List<MethodDeclaration> methods,
+    public static SymbolReference<MethodDeclaration> findMostApplicable(List<MethodDeclaration> methods,
                                                                         MethodCallExpr methodCall,
-                                                                        TypeSolver typeSolver,
-                                                                        boolean wildcardTolerance) {
-        List<MethodDeclaration> applicableMethods = getMethodsWithoutDuplicates(methods).stream().filter((m) -> isApplicableUsingTypeInference(m, methodCall, typeSolver)).collect(Collectors.toList());
+                                                                        TypeSolver typeSolver) {
+        List<MethodDeclaration> applicableMethods = getMethodsWithoutDuplicates(methods).stream().filter((m) -> isApplicable(m, methodCall, typeSolver)).collect(Collectors.toList());
         if (applicableMethods.isEmpty()) {
             return SymbolReference.unsolved(MethodDeclaration.class);
         }
@@ -276,6 +236,42 @@ public class MethodResolutionLogic {
 //        }
         throw new UnsupportedOperationException();
     }
+
+    public static Optional<MethodUsage> findMostApplicableUsage(List<MethodUsage> methods,
+                                                                MethodCallExpr methodCall,
+                                                                TypeSolver typeSolver) {
+        List<MethodUsage> applicableMethods = methods.stream().filter((m) -> isApplicable(m.getDeclaration(), methodCall, typeSolver)).collect(Collectors.toList());
+
+        if (applicableMethods.isEmpty()) {
+            return Optional.empty();
+        }
+        if (applicableMethods.size() == 1) {
+            return Optional.of(applicableMethods.get(0));
+        } else {
+            MethodUsage winningCandidate = applicableMethods.get(0);
+            for (int i = 1; i < applicableMethods.size(); i++) {
+                MethodUsage other = applicableMethods.get(i);
+                if (isMoreSpecific(winningCandidate, other, typeSolver)) {
+                    // nothing to do
+                } else if (isMoreSpecific(other, winningCandidate, typeSolver)) {
+                    winningCandidate = other;
+                } else {
+                    if (winningCandidate.declaringType().getQualifiedName().equals(other.declaringType().getQualifiedName())) {
+                        if (!areOverride(winningCandidate, other)) {
+                            throw new MethodAmbiguityException("Ambiguous method call: cannot find a most applicable method: " + winningCandidate + ", " + other + ". First declared in " + winningCandidate.declaringType().getQualifiedName());
+                        }
+                    } else {
+                        // we expect the methods to be ordered such that inherited methods are later in the list
+                        //throw new UnsupportedOperationException();
+                    }
+                }
+            }
+            return Optional.of(winningCandidate);
+        }
+    }
+
+
+    // USED ONLY IN DEPRECATED METHODS
     @Deprecated
     public static Optional<MethodUsage> findMostApplicableUsage(List<MethodUsage> methods, String name,
                                                                 List<Type> argumentsTypes, TypeSolver typeSolver) {
@@ -314,6 +310,7 @@ public class MethodResolutionLogic {
         }
     }
 
+    // USED ONLY IN DEPRECATED METHODS
     @Deprecated
     public static SymbolReference<MethodDeclaration> solveMethodInType(TypeDeclaration typeDeclaration, String name,
                                                                        List<Type> argumentsTypes,
@@ -321,18 +318,19 @@ public class MethodResolutionLogic {
         return solveMethodInType(typeDeclaration, name, argumentsTypes, false, typeSolver);
     }
 
-    public static SymbolReference<MethodDeclaration> solveMethodInTypeUsingTypeInference(
+    public static SymbolReference<MethodDeclaration> solveMethodInType(
             TypeDeclaration typeDeclaration, MethodCallExpr call, TypeSolver typeSolver) {
-        return solveMethodInTypeUsingTypeInference(typeDeclaration, call, false, typeSolver);
+        return solveMethodInType(typeDeclaration, call, false, typeSolver);
     }
 
-    public static SymbolReference<MethodDeclaration> solveMethodInTypeUsingTypeInference(
+    public static SymbolReference<MethodDeclaration> solveMethodInType(
             TypeDeclaration typeDeclaration, MethodCallExpr call, boolean staticOnly, TypeSolver typeSolver) {
         // TODO not sure it needs to be changed
         List<Type> argumentsTypes = call.getArguments().stream().map(a -> JavaParserFacade.get(typeSolver).getType(a)).collect(Collectors.toList());
         return solveMethodInType(typeDeclaration, call.getNameAsString(), argumentsTypes, staticOnly, typeSolver);
     }
 
+    // USED ONLY IN DEPRECATED METHODS
     /**
      * Replace TypeDeclaration.solveMethod
      *
@@ -390,6 +388,7 @@ public class MethodResolutionLogic {
     /// Package-protected methods
     ///
 
+    // USED ONLY IN DEPRECATED METHODS
     @Deprecated
     static boolean isApplicable(MethodUsage method, String name, List<Type> argumentsTypes,
                                 TypeSolver typeSolver) {
@@ -470,8 +469,8 @@ public class MethodResolutionLogic {
         return true;
     }
 
-    static boolean isApplicableUsingTypeInference(MethodDeclaration method, MethodCallExpr methodCallExpr,
-                                                  TypeSolver typeSolver) {
+    static boolean isApplicable(MethodDeclaration method, MethodCallExpr methodCallExpr,
+                                TypeSolver typeSolver) {
         TypeInference typeInference = new TypeInference(typeSolver);
         return typeInference.invocationApplicabilityInference(methodCallExpr, method);
     }
@@ -527,6 +526,7 @@ public class MethodResolutionLogic {
         return variadicValues.get(0);
     }
 
+    // USED ONLY IN DEPRECATED METHODS
     @Deprecated
     private static boolean isApplicable(MethodDeclaration method, String name, List<Type> argumentsTypes,
                                         TypeSolver typeSolver, boolean withWildcardTolerance) {
@@ -787,6 +787,7 @@ public class MethodResolutionLogic {
     }
 
 
+    // USED ONLY IN DEPRECATED METHODS
     @Deprecated
     private static void inferTypes(Type source, Type target, Map<TypeParameterDeclaration, Type> mappings) {
         if (source.equals(target)) {
