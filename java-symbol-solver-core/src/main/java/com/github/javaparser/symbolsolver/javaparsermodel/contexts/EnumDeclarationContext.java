@@ -18,8 +18,10 @@ package com.github.javaparser.symbolsolver.javaparsermodel.contexts;
 
 import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserEnumConstantDeclaration;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserEnumDeclaration;
+import com.github.javaparser.symbolsolver.model.declarations.MethodDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.ReferenceTypeDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.ValueDeclaration;
 import com.github.javaparser.symbolsolver.model.resolution.SymbolReference;
@@ -69,6 +71,11 @@ public class EnumDeclarationContext extends AbstractJavaParserContext<EnumDeclar
     @Deprecated
     public SymbolReference<com.github.javaparser.symbolsolver.model.declarations.MethodDeclaration> solveMethod(String name, List<Type> argumentsTypes, boolean staticOnly, TypeSolver typeSolver) {
         return javaParserTypeDeclarationAdapter.solveMethod(name, argumentsTypes, staticOnly, typeSolver);
+    }
+
+    @Override
+    public SymbolReference<MethodDeclaration> solveMethod(MethodCallExpr methodCall, boolean staticOnly, TypeSolver typeSolver) {
+        return javaParserTypeDeclarationAdapter.solveMethod(methodCall, staticOnly, typeSolver);
     }
 
     ///

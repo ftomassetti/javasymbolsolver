@@ -17,6 +17,7 @@
 package com.github.javaparser.symbolsolver.javaparsermodel.contexts;
 
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParserTypeParameter;
 import com.github.javaparser.symbolsolver.model.declarations.*;
@@ -93,6 +94,11 @@ public class ClassOrInterfaceDeclarationContext extends AbstractJavaParserContex
     @Deprecated
     public SymbolReference<MethodDeclaration> solveMethod(String name, List<Type> argumentsTypes, boolean staticOnly, TypeSolver typeSolver) {
         return javaParserTypeDeclarationAdapter.solveMethod(name, argumentsTypes, staticOnly, typeSolver);
+    }
+
+    @Override
+    public SymbolReference<MethodDeclaration> solveMethod(MethodCallExpr methodCall, boolean staticOnly, TypeSolver typeSolver) {
+        return javaParserTypeDeclarationAdapter.solveMethod(methodCall, staticOnly, typeSolver);
     }
 
     public SymbolReference<ConstructorDeclaration> solveConstructor(List<Type> argumentsTypes, TypeSolver typeSolver) {

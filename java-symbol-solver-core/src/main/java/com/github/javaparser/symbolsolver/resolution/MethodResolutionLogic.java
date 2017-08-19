@@ -179,62 +179,64 @@ public class MethodResolutionLogic {
             return SymbolReference.unsolved(MethodDeclaration.class);
         }
 
-//        if (applicableMethods.size() > 1) {
-//            List<Integer> nullParamIndexes = new ArrayList<>();
-//            for (int i = 0; i < methodCall.getArguments().size(); i++) {
-//                if (argumentsTypes.get(i).isNull()) {
-//                    nullParamIndexes.add(i);
-//                }
-//            }
-//            if (!nullParamIndexes.isEmpty()) {
-//                // remove method with array param if a non array exists and arg is null
-//                Set<MethodDeclaration> removeCandidates = new HashSet<>();
-//                for (Integer nullParamIndex: nullParamIndexes) {
-//                    for (MethodDeclaration methDecl: applicableMethods) {
-//                        if (methDecl.getParam(nullParamIndex.intValue()).getType().isArray()) {
-//                            removeCandidates.add(methDecl);
-//                        }
-//                    }
-//                }
-//                if (!removeCandidates.isEmpty() && removeCandidates.size() < applicableMethods.size()) {
-//                    applicableMethods.removeAll(removeCandidates);
-//                }
-//            }
-//        }
-//        if (applicableMethods.size() == 1) {
-//            return SymbolReference.solved(applicableMethods.get(0));
-//        } else {
-//            MethodDeclaration winningCandidate = applicableMethods.get(0);
-//            MethodDeclaration other = null;
-//            boolean possibleAmbiguity = false;
-//            for (int i = 1; i < applicableMethods.size(); i++) {
-//                other = applicableMethods.get(i);
-//                if (isMoreSpecific(winningCandidate, other, argumentsTypes, typeSolver)) {
-//                    possibleAmbiguity = false;
-//                } else if (isMoreSpecific(other, winningCandidate, argumentsTypes, typeSolver)) {
-//                    possibleAmbiguity = false;
-//                    winningCandidate = other;
-//                } else {
-//                    if (winningCandidate.declaringType().getQualifiedName().equals(other.declaringType().getQualifiedName())) {
-//                        possibleAmbiguity = true;
-//                    } else {
-//                        // we expect the methods to be ordered such that inherited methods are later in the list
-//                    }
-//                }
-//            }
-//            if (possibleAmbiguity) {
-//                // pick the first exact match if it exists
-//                if (!isExactMatch(winningCandidate, argumentsTypes)) {
-//                    if (isExactMatch(other, argumentsTypes)) {
-//                        winningCandidate = other;
-//                    } else {
-//                        throw new MethodAmbiguityException("Ambiguous method call: cannot find a most applicable method: " + winningCandidate + ", " + other);
-//                    }
-//                }
-//            }
-//            return SymbolReference.solved(winningCandidate);
-//        }
-        throw new UnsupportedOperationException();
+        List<Type> argumentsTypes = methodCall.getArguments().stream()
+                .map(a -> JavaParserFacade.get(typeSolver).getType(a))
+                .collect(Collectors.toList());
+        if (applicableMethods.size() > 1) {
+            List<Integer> nullParamIndexes = new ArrayList<>();
+            for (int i = 0; i < methodCall.getArguments().size(); i++) {
+                if (argumentsTypes.get(i).isNull()) {
+                    nullParamIndexes.add(i);
+                }
+            }
+            if (!nullParamIndexes.isEmpty()) {
+                // remove method with array param if a non array exists and arg is null
+                Set<MethodDeclaration> removeCandidates = new HashSet<>();
+                for (Integer nullParamIndex: nullParamIndexes) {
+                    for (MethodDeclaration methDecl: applicableMethods) {
+                        if (methDecl.getParam(nullParamIndex.intValue()).getType().isArray()) {
+                            removeCandidates.add(methDecl);
+                        }
+                    }
+                }
+                if (!removeCandidates.isEmpty() && removeCandidates.size() < applicableMethods.size()) {
+                    applicableMethods.removeAll(removeCandidates);
+                }
+            }
+        }
+        if (applicableMethods.size() == 1) {
+            return SymbolReference.solved(applicableMethods.get(0));
+        } else {
+            MethodDeclaration winningCandidate = applicableMethods.get(0);
+            MethodDeclaration other = null;
+            boolean possibleAmbiguity = false;
+            for (int i = 1; i < applicableMethods.size(); i++) {
+                other = applicableMethods.get(i);
+                if (isMoreSpecific(winningCandidate, other, argumentsTypes, typeSolver)) {
+                    possibleAmbiguity = false;
+                } else if (isMoreSpecific(other, winningCandidate, argumentsTypes, typeSolver)) {
+                    possibleAmbiguity = false;
+                    winningCandidate = other;
+                } else {
+                    if (winningCandidate.declaringType().getQualifiedName().equals(other.declaringType().getQualifiedName())) {
+                        possibleAmbiguity = true;
+                    } else {
+                        // we expect the methods to be ordered such that inherited methods are later in the list
+                    }
+                }
+            }
+            if (possibleAmbiguity) {
+                // pick the first exact match if it exists
+                if (!isExactMatch(winningCandidate, argumentsTypes)) {
+                    if (isExactMatch(other, argumentsTypes)) {
+                        winningCandidate = other;
+                    } else {
+                        throw new MethodAmbiguityException("Ambiguous method call: cannot find a most applicable method: " + winningCandidate + ", " + other);
+                    }
+                }
+            }
+            return SymbolReference.solved(winningCandidate);
+        }
     }
 
     public static Optional<MethodUsage> findMostApplicableUsage(List<MethodUsage> methods,

@@ -253,6 +253,55 @@ public class MethodCallExprContext extends AbstractJavaParserContext<MethodCallE
         }
     }
 
+    @Override
+    public SymbolReference<MethodDeclaration> solveMethod(MethodCallExpr methodCall, boolean staticOnly, TypeSolver typeSolver) {
+        if (wrappedNode.getScope().isPresent()) {
+            Expression scope = wrappedNode.getScope().get();
+
+            // consider static methods
+            if (scope instanceof NameExpr) {
+                NameExpr scopeAsName = (NameExpr) scope;
+                SymbolReference<TypeDeclaration> symbolReference = this.solveType(scopeAsName.getName().getId(), typeSolver);
+                if (symbolReference.isSolved() && symbolReference.getCorrespondingDeclaration().isType()) {
+                    TypeDeclaration typeDeclaration = symbolReference.getCorrespondingDeclaration().asType();
+                    return MethodResolutionLogic.solveMethodInType(typeDeclaration, methodCall, false, typeSolver);
+                }
+            }
+
+            Type typeOfScope = null;
+            try {
+                typeOfScope = JavaParserFacade.get(typeSolver).getType(scope);
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("Issue calculating the type of the scope of " + this), e);
+            }
+            if (typeOfScope.isWildcard()) {
+                if (typeOfScope.asWildcard().isExtends() || typeOfScope.asWildcard().isSuper()) {
+                    return MethodResolutionLogic.solveMethodInType(typeOfScope.asWildcard().getBoundedType().asReferenceType().getTypeDeclaration(), methodCall, false, typeSolver);
+                } else {
+                    return MethodResolutionLogic.solveMethodInType(new ReflectionClassDeclaration(Object.class, typeSolver), methodCall, false, typeSolver);
+                }
+            } else if (typeOfScope.isArray()) {
+                // method call on array are Object methods
+                return MethodResolutionLogic.solveMethodInType(new ReflectionClassDeclaration(Object.class, typeSolver), methodCall, false, typeSolver);
+            } else if (typeOfScope.isTypeVariable()) {
+                for (TypeParameterDeclaration.Bound bound : typeOfScope.asTypeParameter().getBounds(typeSolver)) {
+                    SymbolReference<MethodDeclaration> res = MethodResolutionLogic.solveMethodInType(bound.getType().asReferenceType().getTypeDeclaration(), methodCall, false, typeSolver);
+                    if (res.isSolved()) {
+                        return res;
+                    }
+                }
+                return SymbolReference.unsolved(MethodDeclaration.class);
+            } else if (typeOfScope.isConstraint()){
+                return MethodResolutionLogic.solveMethodInType(typeOfScope.asConstraintType().getBound().asReferenceType().getTypeDeclaration(), methodCall, typeSolver);
+            } else {
+                return MethodResolutionLogic.solveMethodInType(typeOfScope.asReferenceType().getTypeDeclaration(), methodCall, false, typeSolver);
+            }
+        } else {
+            Type typeOfScope = JavaParserFacade.get(typeSolver).getTypeOfThisIn(wrappedNode);
+            return MethodResolutionLogic.solveMethodInType(typeOfScope.asReferenceType().getTypeDeclaration(), methodCall, false, typeSolver);
+        }
+    }
+
     ///
     /// Private methods
     ///
