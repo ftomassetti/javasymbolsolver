@@ -17,6 +17,7 @@
 package com.github.javaparser.symbolsolver.javaparsermodel.contexts;
 
 import com.github.javaparser.ast.expr.LambdaExpr;
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithStatements;
 import com.github.javaparser.ast.stmt.IfStmt;
 import com.github.javaparser.ast.stmt.Statement;
@@ -189,8 +190,14 @@ public class StatementContext<N extends Statement> extends AbstractJavaParserCon
     }
 
     @Override
+    @Deprecated
     public SymbolReference<MethodDeclaration> solveMethod(String name, List<Type> argumentsTypes, boolean staticOnly, TypeSolver typeSolver) {
         return getParent().solveMethod(name, argumentsTypes, false, typeSolver);
+    }
+
+    @Override
+    public SymbolReference<MethodDeclaration> solveMethod(MethodCallExpr methodCall, boolean staticOnly, TypeSolver typeSolver) {
+        return getParent().solveMethod(methodCall, false, typeSolver);
     }
 
     @Override

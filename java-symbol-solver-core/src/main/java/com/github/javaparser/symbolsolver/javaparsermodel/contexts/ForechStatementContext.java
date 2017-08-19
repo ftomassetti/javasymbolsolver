@@ -54,6 +54,7 @@ public class ForechStatementContext extends AbstractJavaParserContext<ForeachStm
     }
 
     @Override
+    @Deprecated
     public SymbolReference<MethodDeclaration> solveMethod(String name, List<Type> argumentsTypes, boolean staticOnly, TypeSolver typeSolver) {
         return getParent().solveMethod(name, argumentsTypes, false, typeSolver);
     }

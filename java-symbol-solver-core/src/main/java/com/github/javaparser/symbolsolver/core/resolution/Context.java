@@ -90,7 +90,7 @@ public interface Context {
      * We find the method declaration which is the best match for the given call.
      */
     default SymbolReference<MethodDeclaration> solveMethod(MethodCallExpr methodCall, boolean staticOnly, TypeSolver typeSolver) {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException(this.getClass().getCanonicalName());
     }
 
     /**
