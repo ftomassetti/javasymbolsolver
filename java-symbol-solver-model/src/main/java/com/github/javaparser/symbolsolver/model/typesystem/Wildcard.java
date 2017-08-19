@@ -18,6 +18,7 @@ package com.github.javaparser.symbolsolver.model.typesystem;
 
 import com.github.javaparser.symbolsolver.model.declarations.TypeParameterDeclaration;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -154,6 +155,22 @@ public class Wildcard implements Type {
         } else {
             return this;
         }
+    }
+
+    public boolean boundsMention(List<TypeParameterDeclaration> typeParameters) {
+        if (boundedType == null) {
+            return false;
+        } else {
+            return boundedType.mention(typeParameters);
+        }
+    }
+
+    public boolean isUpperBounded() {
+        return isSuper();
+    }
+
+    public boolean isLowerBounded() {
+        return isExtends();
     }
 
     public enum BoundType {

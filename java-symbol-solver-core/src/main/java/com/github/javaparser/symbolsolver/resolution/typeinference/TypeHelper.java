@@ -1,12 +1,14 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference;
 
 import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.LambdaExpr;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
+import com.github.javaparser.symbolsolver.logic.FunctionalInterfaceLogic;
+import com.github.javaparser.symbolsolver.model.declarations.TypeParameterDeclaration;
+import com.github.javaparser.symbolsolver.model.methods.MethodUsage;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
-import com.github.javaparser.symbolsolver.model.typesystem.PrimitiveType;
-import com.github.javaparser.symbolsolver.model.typesystem.ReferenceType;
-import com.github.javaparser.symbolsolver.model.typesystem.Type;
-import com.github.javaparser.symbolsolver.model.typesystem.Wildcard;
+import com.github.javaparser.symbolsolver.model.typesystem.*;
+import com.github.javaparser.utils.Pair;
 
 import java.util.*;
 
@@ -280,5 +282,123 @@ public class TypeHelper {
         //
         //The possibility of an infinite type stems from the recursive calls to lub(). Readers familiar with recursive types should note that an infinite type is not the same as a recursive type
         throw new UnsupportedOperationException();
+    }
+
+    /**
+     * See JLS 15.27.3. Type of a Lambda Expression
+     * @return
+     */
+    public static Pair<Type, Boolean> groundTargetTypeOfLambda(LambdaExpr lambdaExpr, Type T, TypeSolver typeSolver) {
+        // The ground target type is derived from T as follows:
+        //
+        boolean used18_5_3 = false;
+
+        boolean wildcardParameterized = T.asReferenceType().typeParametersValues().stream()
+                .anyMatch(tp -> tp.isWildcard());
+        if (wildcardParameterized) {
+            // - If T is a wildcard-parameterized functional interface type and the lambda expression is explicitly typed,
+            //   then the ground target type is inferred as described in §18.5.3.
+
+            if (ExpressionHelper.isExplicitlyTyped(lambdaExpr)) {
+                used18_5_3 = true;
+                throw new UnsupportedOperationException();
+            }
+
+            // - If T is a wildcard-parameterized functional interface type and the lambda expression is implicitly typed,
+            //   then the ground target type is the non-wildcard parameterization (§9.9) of T.
+
+            else {
+                return new Pair<>(nonWildcardParameterizationOf(T.asReferenceType(), typeSolver), used18_5_3);
+            }
+        }
+
+        // - Otherwise, the ground target type is T.
+        return new Pair<>(T, used18_5_3);
+    }
+
+    /**
+     * See JLS 9.9
+     */
+    private static ReferenceType nonWildcardParameterizationOf(ReferenceType originalType, TypeSolver typeSolver) {
+        List<Type> TIs = new LinkedList<>();
+        List<Type> AIs = originalType.typeParametersValues();
+        List<TypeParameterDeclaration> TPs = originalType.getTypeDeclaration().getTypeParameters();
+
+        // Let P1...Pn be the type parameters of I with corresponding bounds B1...Bn. For all i (1 ≤ i ≤ n),
+        // Ti is derived according to the form of Ai:
+
+        ReferenceType object = new ReferenceTypeImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver);
+
+        for (int i=0;i<AIs.size();i++) {
+            Type Ai = AIs.get(i);
+            Type Ti = null;
+
+            // - If Ai is a type, then Ti = Ai.
+
+            if (!Ai.isWildcard()) {
+                Ti = Ai;
+            }
+
+            // - If Ai is a wildcard, and the corresponding type parameter's bound, Bi, mentions one of P1...Pn, then
+            //   Ti is undefined and there is no function type.
+
+            if (Ti == null && Ai.isWildcard() && Ai.asWildcard().boundsMention(originalType.getTypeDeclaration().getTypeParameters())) {
+                throw new IllegalArgumentException();
+            }
+
+            // - Otherwise:
+
+            if (Ti == null) {
+
+                Type Bi = TPs.get(i).hasLowerBound(typeSolver) ? TPs.get(i).getLowerBound(typeSolver) : object;
+
+                //   - If Ai is an unbound wildcard ?, then Ti = Bi.
+
+                if (Ai.isWildcard() && !Ai.asWildcard().isBounded()) {
+                    Ti = Bi;
+                }
+
+                //   - If Ai is a upper-bounded wildcard ? extends Ui, then Ti = glb(Ui, Bi) (§5.1.10).
+
+                else if (Ai.isWildcard() && Ai.asWildcard().isUpperBounded()) {
+                    Type Ui = Ai.asWildcard().getBoundedType();
+                    Ti = glb(new HashSet<>(Arrays.asList(Ui, Bi)));
+                }
+
+                //   - If Ai is a lower-bounded wildcard ? super Li, then Ti = Li.
+
+                else if (Ai.isWildcard() && Ai.asWildcard().isLowerBounded()) {
+                    Ti = Ai.asWildcard().getBoundedType();
+                }
+
+                else throw new RuntimeException("This should not happen");
+            }
+
+            TIs.add(Ti);
+        }
+
+        return new ReferenceTypeImpl(originalType.getTypeDeclaration(), TIs, typeSolver);
+    }
+
+    public static MethodType getFunctionType(Type type) {
+        Optional<MethodUsage> mu = FunctionalInterfaceLogic.getFunctionalMethod(type);
+        if (mu.isPresent()) {
+            return MethodType.fromMethodUsage(mu.get());
+        } else {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    /**
+     * See JLS 5.1.10. Capture Conversion.
+     */
+    public static Type glb(Set<Type> types) {
+        if (types.size() == 0) {
+            throw new IllegalArgumentException();
+        }
+        if (types.size() == 1) {
+            return types.iterator().next();
+        }
+        return new IntersectionType(types);
     }
 }

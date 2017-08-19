@@ -1,6 +1,7 @@
 package com.github.javaparser.symbolsolver.resolution.typeinference;
 
 import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.type.UnknownType;
 
 /**
  * @author Federico Tomassetti
@@ -49,4 +50,7 @@ public class ExpressionHelper {
         return false;
     }
 
+    public static boolean isExplicitlyTyped(LambdaExpr lambdaExpr) {
+        return lambdaExpr.getParameters().stream().allMatch(p -> !(p.getType() instanceof UnknownType));
+    }
 }

@@ -19,10 +19,13 @@ package com.github.javaparser.symbolsolver.model.methods;
 import com.github.javaparser.symbolsolver.model.declarations.MethodDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.ReferenceTypeDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.TypeParameterDeclaration;
+import com.github.javaparser.symbolsolver.model.typesystem.ReferenceType;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.model.typesystem.parametrization.TypeParametersMap;
 import com.github.javaparser.symbolsolver.model.typesystem.parametrization.TypeParametrized;
 
+import java.lang.ref.Reference;
+import java.sql.Ref;
 import java.util.*;
 
 /**
@@ -144,5 +147,14 @@ public class MethodUsage implements TypeParametrized {
     public String getQualifiedSignature() {
         // TODO use the type parameters
         return this.getDeclaration().getQualifiedSignature();
+    }
+
+    public List<ReferenceType> exceptionTypes() {
+        // FIXME
+        List<ReferenceType> res = new LinkedList<>();
+        for (int i=0;i<this.getDeclaration().getNumberOfSpecifiedExceptions();i++) {
+            res.add(this.getDeclaration().getSpecifiedException(i));
+        }
+        return res;
     }
 }

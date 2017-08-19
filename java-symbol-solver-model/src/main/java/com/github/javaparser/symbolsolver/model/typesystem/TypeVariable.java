@@ -18,6 +18,7 @@ package com.github.javaparser.symbolsolver.model.typesystem;
 
 import com.github.javaparser.symbolsolver.model.declarations.TypeParameterDeclaration;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -116,4 +117,8 @@ public class TypeVariable implements Type {
         }
     }
 
+    @Override
+    public boolean mention(List<TypeParameterDeclaration> typeParameters) {
+        return typeParameters.contains(typeParameter);
+    }
 }

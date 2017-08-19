@@ -81,4 +81,10 @@ public class InferenceVariable implements Type {
                 ", typeParameterDeclaration=" + typeParameterDeclaration +
                 '}';
     }
+
+    @Override
+    public boolean mention(List<TypeParameterDeclaration> typeParameters) {
+        // NOT SURE
+        return false;
+    }
 }
