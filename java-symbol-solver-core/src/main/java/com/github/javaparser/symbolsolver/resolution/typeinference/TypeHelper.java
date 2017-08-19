@@ -107,7 +107,7 @@ public class TypeHelper {
 
         // - an unboxing conversion (§5.1.8) optionally followed by a widening primitive conversion
 
-        if (s.isReferenceType() && t.isPrimitive() &&
+        if (isUnboxable(s) && s.isReferenceType() && t.isPrimitive() &&
                 areCompatibleThroughWideningPrimitiveConversion(toUnboxedType(s.asReferenceType()), t)) {
             return true;
         }
@@ -125,8 +125,15 @@ public class TypeHelper {
         return t.isAssignableBy(s);
     }
 
+    private static boolean isUnboxable(Type referenceType) {
+        if (!referenceType.isReferenceType()) {
+            return false;
+        }
+        return PrimitiveType.ALL.stream().anyMatch(pt -> referenceType.asReferenceType().getQualifiedName().equals(pt.getBoxTypeQName()));
+    }
+
     private static Type toUnboxedType(ReferenceType referenceType) {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException(referenceType.toString());
     }
 
     private static Type toBoxedType(PrimitiveType primitiveType) {

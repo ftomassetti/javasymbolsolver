@@ -166,7 +166,7 @@ public class TypeInference {
         //   - To test for applicability by variable arity invocation:
 
         if (!C.isPresent()) {
-            C = testForApplicabilityByVariableArityInvocation();
+            C = testForApplicabilityByVariableArityInvocation(Fs, es, theta);
         }
 
         if (!C.isPresent()) {
@@ -348,11 +348,20 @@ public class TypeInference {
         return constraintFormulaSet;
     }
 
-    private Optional<ConstraintFormulaSet> testForApplicabilityByVariableArityInvocation() {
+    private Optional<ConstraintFormulaSet> testForApplicabilityByVariableArityInvocation(List<Type> Fs, List<Expression> es,
+                                                                                         Substitution theta) {
+        int k = es.size();
+
         // Let F'1, ..., F'k be the first k variable arity parameter types of m (§15.12.2.4). C includes,
         // for all i (1 ≤ i ≤ k) where ei is pertinent to applicability, ‹ei → F'i θ›.
 
-        throw new UnsupportedOperationException();
+        List<Type> FsFirst = new LinkedList<>();
+        for (int i=0;i<k;i++) {
+            Type FFirstI = i < Fs.size() ? Fs.get(i) : Fs.get(Fs.size() - 1);
+            FsFirst.add(FFirstI);
+        }
+
+        return Optional.of(constraintSetFromArgumentsSubstitution(FsFirst, es, theta, k));
     }
 
     public void invocationTypeInference() {

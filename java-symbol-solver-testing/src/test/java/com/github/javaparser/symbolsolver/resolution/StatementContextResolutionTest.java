@@ -89,6 +89,23 @@ public class StatementContextResolutionTest extends AbstractResolutionTest {
     }
 
     @Test
+    public void resolveLocalAndSeveralAnnidatedLevelsUsingTypeInference() throws ParseException {
+        CompilationUnit cu = parseSample("LocalVariableInParent");
+        com.github.javaparser.ast.body.ClassOrInterfaceDeclaration referencesToField = Navigator.demandClass(cu, "LocalVariableInParent");
+        MethodDeclaration method = Navigator.demandMethod(referencesToField, "foo4");
+        MethodCallExpr call = Navigator.findMethodCall(method, "add");
+
+        TypeSolver typeSolver = new ReflectionTypeSolver();
+
+        SymbolReference<? extends ValueDeclaration> ref = JavaParserFacade.get(typeSolver).solve(call.getScope().get());
+        assertTrue(ref.isSolved());
+        assertEquals("java.util.List<Comment>", ref.getCorrespondingDeclaration().getType().describe());
+
+        MethodUsage methodUsage = JavaParserFacade.get(typeSolver).solveMethodAsUsageUsingTypeInference(call);
+        assertEquals("add", methodUsage.getName());
+    }
+
+    @Test
     public void resolveMethodOnGenericClass() throws ParseException {
         CompilationUnit cu = parseSample("LocalVariableInParent");
         com.github.javaparser.ast.body.ClassOrInterfaceDeclaration referencesToField = Navigator.demandClass(cu, "LocalVariableInParent");
@@ -102,6 +119,23 @@ public class StatementContextResolutionTest extends AbstractResolutionTest {
         assertEquals("java.util.List<Comment>", ref.getCorrespondingDeclaration().getType().describe());
 
         MethodUsage methodUsage = JavaParserFacade.get(typeSolver).solveMethodAsUsage(call);
+        assertEquals("add", methodUsage.getName());
+    }
+
+    @Test
+    public void resolveMethodOnGenericClassUsingTypeInference() throws ParseException {
+        CompilationUnit cu = parseSample("LocalVariableInParent");
+        com.github.javaparser.ast.body.ClassOrInterfaceDeclaration referencesToField = Navigator.demandClass(cu, "LocalVariableInParent");
+        MethodDeclaration method = Navigator.demandMethod(referencesToField, "foo5");
+        MethodCallExpr call = Navigator.findMethodCall(method, "add");
+
+        TypeSolver typeSolver = new ReflectionTypeSolver();
+
+        SymbolReference<? extends ValueDeclaration> ref = JavaParserFacade.get(typeSolver).solve(call.getScope().get());
+        assertTrue(ref.isSolved());
+        assertEquals("java.util.List<Comment>", ref.getCorrespondingDeclaration().getType().describe());
+
+        MethodUsage methodUsage = JavaParserFacade.get(typeSolver).solveMethodAsUsageUsingTypeInference(call);
         assertEquals("add", methodUsage.getName());
     }
 
