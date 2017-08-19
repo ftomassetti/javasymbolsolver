@@ -109,7 +109,41 @@ public class JavassistInterfaceDeclaration extends AbstractTypeDeclaration imple
     }
 
     public SymbolReference<MethodDeclaration> solveMethod(MethodCallExpr methodCall, boolean staticOnly) {
-        throw new UnsupportedOperationException();
+        String name = methodCall.getNameAsString();
+        List<MethodDeclaration> candidates = new ArrayList<>();
+        Predicate<CtMethod> staticOnlyCheck = m -> !staticOnly || (staticOnly && Modifier.isStatic(m.getModifiers()));
+        for (CtMethod method : ctClass.getDeclaredMethods()) {
+            boolean isSynthetic = method.getMethodInfo().getAttribute(SyntheticAttribute.tag) != null;
+            boolean isNotBridge =  (method.getMethodInfo().getAccessFlags() & AccessFlag.BRIDGE) == 0;
+            if (method.getName().equals(name) && !isSynthetic && isNotBridge && staticOnlyCheck.test(method)) {
+                candidates.add(new JavassistMethodDeclaration(method, typeSolver));
+            }
+        }
+
+        try {
+            CtClass superClass = ctClass.getSuperclass();
+            if (superClass != null) {
+                SymbolReference<MethodDeclaration> ref = new JavassistClassDeclaration(superClass, typeSolver).solveMethod(methodCall, staticOnly);
+                if (ref.isSolved()) {
+                    candidates.add(ref.getCorrespondingDeclaration());
+                }
+            }
+        } catch (NotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            for (CtClass interfaze : ctClass.getInterfaces()) {
+                SymbolReference<MethodDeclaration> ref = new JavassistInterfaceDeclaration(interfaze, typeSolver).solveMethod(methodCall, staticOnly);
+                if (ref.isSolved()) {
+                    candidates.add(ref.getCorrespondingDeclaration());
+                }
+            }
+        } catch (NotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        return MethodResolutionLogic.findMostApplicable(candidates, methodCall, typeSolver);
     }
 
     @Deprecated
