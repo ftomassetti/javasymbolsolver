@@ -142,6 +142,7 @@ public class JavaParserClassDeclaration extends AbstractClassDeclaration {
     /// Public methods
     ///
 
+    @Deprecated
     public SymbolReference<MethodDeclaration> solveMethod(String name, List<Type> parameterTypes) {
         Context ctx = getContext();
         return ctx.solveMethod(name, parameterTypes, false, typeSolver);

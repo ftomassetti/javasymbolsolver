@@ -2,6 +2,7 @@ package com.github.javaparser.symbolsolver.javaparsermodel.contexts;
 
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithParameters;
 import com.github.javaparser.ast.nodeTypes.NodeWithTypeParameters;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
@@ -98,5 +99,10 @@ public abstract class AbstractMethodLikeDeclarationContext
     public final SymbolReference<MethodDeclaration> solveMethod(
             String name, List<Type> argumentsTypes, boolean staticOnly, TypeSolver typeSolver) {
         return getParent().solveMethod(name, argumentsTypes, false, typeSolver);
+    }
+
+    @Override
+    public SymbolReference<MethodDeclaration> solveMethod(MethodCallExpr methodCall, boolean staticOnly, TypeSolver typeSolver) {
+        return getParent().solveMethod(methodCall, false, typeSolver);
     }
 }
