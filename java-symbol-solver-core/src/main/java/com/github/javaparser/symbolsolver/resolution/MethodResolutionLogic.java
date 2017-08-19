@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
  */
 public class MethodResolutionLogic {
 
+    // TODO move to a different class
     public static Type replaceTypeParam(Type type, TypeParameterDeclaration tp, TypeSolver typeSolver) {
         if (type.isTypeVariable()) {
             if (type.describe().equals(tp.getName())) {
