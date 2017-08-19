@@ -45,13 +45,280 @@ import java.util.stream.Collectors;
  */
 public class MethodResolutionLogic {
 
-    public static boolean isApplicableUsingTypeInference(MethodDeclaration method, MethodCallExpr methodCallExpr, TypeSolver typeSolver) {
-        TypeInference typeInference = new TypeInference(typeSolver);
-        return typeInference.invocationApplicabilityInference(methodCallExpr, method);
+    public static Type replaceTypeParam(Type type, TypeParameterDeclaration tp, TypeSolver typeSolver) {
+        if (type.isTypeVariable()) {
+            if (type.describe().equals(tp.getName())) {
+                List<TypeParameterDeclaration.Bound> bounds = tp.getBounds(typeSolver);
+                if (bounds.size() > 1) {
+                    throw new UnsupportedOperationException();
+                } else if (bounds.size() == 1) {
+                    return bounds.get(0).getType();
+                } else {
+                    return new ReferenceTypeImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver);
+                }
+            }
+            return type;
+        } else if (type.isPrimitive()) {
+            return type;
+        } else if (type.isArray()) {
+            return new ArrayType(replaceTypeParam(type.asArrayType().getComponentType(), tp, typeSolver));
+        } else if (type.isReferenceType()) {
+            ReferenceType result = type.asReferenceType();
+            result = result.transformTypeParameters(typeParam -> replaceTypeParam(typeParam, tp, typeSolver)).asReferenceType();
+            return result;
+        } else if (type.isWildcard()) {
+            if (type.describe().equals(tp.getName())) {
+                List<TypeParameterDeclaration.Bound> bounds = tp.getBounds(typeSolver);
+                if (bounds.size() > 1) {
+                    throw new UnsupportedOperationException();
+                } else if (bounds.size() == 1) {
+                    return bounds.get(0).getType();
+                } else {
+                    return new ReferenceTypeImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver);
+                }
+            }
+            return type;
+        } else {
+            throw new UnsupportedOperationException("Replacing " + type + ", param " + tp + " with " + type.getClass().getCanonicalName());
+        }
+    }
+
+    /**
+     * @param methods        we expect the methods to be ordered such that inherited methods are later in the list
+     * @param name
+     * @param argumentsTypes
+     * @param typeSolver
+     * @return
+     */
+    @Deprecated
+    public static SymbolReference<MethodDeclaration> findMostApplicable(List<MethodDeclaration> methods, String name,
+                                                                        List<Type> argumentsTypes,
+                                                                        TypeSolver typeSolver) {
+        SymbolReference<MethodDeclaration> res = findMostApplicable(methods, name, argumentsTypes, typeSolver, false);
+        if (res.isSolved()) {
+            return res;
+        }
+        return findMostApplicable(methods, name, argumentsTypes, typeSolver, true);
     }
 
     @Deprecated
-    public static boolean isApplicable(MethodUsage method, String name, List<Type> argumentsTypes, TypeSolver typeSolver) {
+    public static SymbolReference<MethodDeclaration> findMostApplicable(List<MethodDeclaration> methods, String name,
+                                                                        List<Type> argumentsTypes,
+                                                                        TypeSolver typeSolver,
+                                                                        boolean wildcardTolerance) {
+        List<MethodDeclaration> applicableMethods = getMethodsWithoutDuplicates(methods).stream().filter((m) -> isApplicable(m, name, argumentsTypes, typeSolver, wildcardTolerance)).collect(Collectors.toList());
+        if (applicableMethods.isEmpty()) {
+            return SymbolReference.unsolved(MethodDeclaration.class);
+        }
+
+        if (applicableMethods.size() > 1) {
+          List<Integer> nullParamIndexes = new ArrayList<>();
+          for (int i = 0; i < argumentsTypes.size(); i++) {
+            if (argumentsTypes.get(i).isNull()) {
+              nullParamIndexes.add(i);
+            }
+          }
+          if (!nullParamIndexes.isEmpty()) {
+            // remove method with array param if a non array exists and arg is null
+            Set<MethodDeclaration> removeCandidates = new HashSet<>();
+            for (Integer nullParamIndex: nullParamIndexes) {
+              for (MethodDeclaration methDecl: applicableMethods) {
+                if (methDecl.getParam(nullParamIndex.intValue()).getType().isArray()) {
+                  removeCandidates.add(methDecl);
+                }
+              }
+            }
+            if (!removeCandidates.isEmpty() && removeCandidates.size() < applicableMethods.size()) {
+              applicableMethods.removeAll(removeCandidates);
+            }
+          }
+        }
+        if (applicableMethods.size() == 1) {
+            return SymbolReference.solved(applicableMethods.get(0));
+        } else {
+            MethodDeclaration winningCandidate = applicableMethods.get(0);
+            MethodDeclaration other = null;
+            boolean possibleAmbiguity = false;
+            for (int i = 1; i < applicableMethods.size(); i++) {
+                other = applicableMethods.get(i);
+                if (isMoreSpecific(winningCandidate, other, argumentsTypes, typeSolver)) {
+                    possibleAmbiguity = false;
+                } else if (isMoreSpecific(other, winningCandidate, argumentsTypes, typeSolver)) {
+                    possibleAmbiguity = false;
+                    winningCandidate = other;
+                } else {
+                    if (winningCandidate.declaringType().getQualifiedName().equals(other.declaringType().getQualifiedName())) {
+                        possibleAmbiguity = true;
+                    } else {
+                        // we expect the methods to be ordered such that inherited methods are later in the list
+                    }
+                }
+            }
+            if (possibleAmbiguity) {
+              // pick the first exact match if it exists
+              if (!isExactMatch(winningCandidate, argumentsTypes)) {
+                if (isExactMatch(other, argumentsTypes)) {
+                  winningCandidate = other;
+                } else {
+                  throw new MethodAmbiguityException("Ambiguous method call: cannot find a most applicable method: " + winningCandidate + ", " + other);
+                }
+              }
+            }
+            return SymbolReference.solved(winningCandidate);
+        }
+    }
+
+
+    public static Optional<MethodUsage> findMostApplicableUsageUsingTypeInference(List<MethodUsage> methods,
+                                                                                  MethodCallExpr methodCall,
+                                                                                  TypeSolver typeSolver) {
+        List<MethodUsage> applicableMethods = methods.stream().filter((m) -> isApplicableUsingTypeInference(m.getDeclaration(), methodCall, typeSolver)).collect(Collectors.toList());
+
+        if (applicableMethods.isEmpty()) {
+            return Optional.empty();
+        }
+        if (applicableMethods.size() == 1) {
+            return Optional.of(applicableMethods.get(0));
+        } else {
+            MethodUsage winningCandidate = applicableMethods.get(0);
+            for (int i = 1; i < applicableMethods.size(); i++) {
+                MethodUsage other = applicableMethods.get(i);
+                if (isMoreSpecific(winningCandidate, other, typeSolver)) {
+                    // nothing to do
+                } else if (isMoreSpecific(other, winningCandidate, typeSolver)) {
+                    winningCandidate = other;
+                } else {
+                    if (winningCandidate.declaringType().getQualifiedName().equals(other.declaringType().getQualifiedName())) {
+                        if (!areOverride(winningCandidate, other)) {
+                            throw new MethodAmbiguityException("Ambiguous method call: cannot find a most applicable method: " + winningCandidate + ", " + other + ". First declared in " + winningCandidate.declaringType().getQualifiedName());
+                        }
+                    } else {
+                        // we expect the methods to be ordered such that inherited methods are later in the list
+                        //throw new UnsupportedOperationException();
+                    }
+                }
+            }
+            return Optional.of(winningCandidate);
+        }
+    }
+
+    @Deprecated
+    public static Optional<MethodUsage> findMostApplicableUsage(List<MethodUsage> methods, String name,
+                                                                List<Type> argumentsTypes, TypeSolver typeSolver) {
+        List<MethodUsage> applicableMethods = methods.stream()
+                .filter((m) -> isApplicable(m, name, argumentsTypes, typeSolver)).collect(Collectors.toList());
+
+        if (applicableMethods.isEmpty()) {
+            return Optional.empty();
+        }
+        if (applicableMethods.size() == 1) {
+            return Optional.of(applicableMethods.get(0));
+        } else {
+            MethodUsage winningCandidate = applicableMethods.get(0);
+            for (int i = 1; i < applicableMethods.size(); i++) {
+                MethodUsage other = applicableMethods.get(i);
+                if (isMoreSpecific(winningCandidate, other, typeSolver)) {
+                    // nothing to do
+                } else if (isMoreSpecific(other, winningCandidate, typeSolver)) {
+                    winningCandidate = other;
+                } else {
+                    if (winningCandidate.declaringType().getQualifiedName()
+                            .equals(other.declaringType().getQualifiedName())) {
+                        if (!areOverride(winningCandidate, other)) {
+                            throw new MethodAmbiguityException(
+                                    "Ambiguous method call: cannot find a most applicable method: " + winningCandidate
+                                            + ", " + other + ". First declared in "
+                                            + winningCandidate.declaringType().getQualifiedName());
+                        }
+                    } else {
+                        // we expect the methods to be ordered such that inherited methods are later in the list
+                        //throw new UnsupportedOperationException();
+                    }
+                }
+            }
+            return Optional.of(winningCandidate);
+        }
+    }
+
+    @Deprecated
+    public static SymbolReference<MethodDeclaration> solveMethodInType(TypeDeclaration typeDeclaration, String name,
+                                                                       List<Type> argumentsTypes,
+                                                                       TypeSolver typeSolver) {
+        return solveMethodInType(typeDeclaration, name, argumentsTypes, false, typeSolver);
+    }
+
+    public static SymbolReference<MethodDeclaration> solveMethodInTypeUsingTypeInference(
+            TypeDeclaration typeDeclaration, MethodCallExpr call, TypeSolver typeSolver) {
+        return solveMethodInTypeUsingTypeInference(typeDeclaration, call, false, typeSolver);
+    }
+
+    public static SymbolReference<MethodDeclaration> solveMethodInTypeUsingTypeInference(
+            TypeDeclaration typeDeclaration, MethodCallExpr call, boolean staticOnly, TypeSolver typeSolver) {
+        // TODO not sure it needs to be changed
+        List<Type> argumentsTypes = call.getArguments().stream().map(a -> JavaParserFacade.get(typeSolver).getType(a)).collect(Collectors.toList());
+        return solveMethodInType(typeDeclaration, call.getNameAsString(), argumentsTypes, staticOnly, typeSolver);
+    }
+
+    /**
+     * Replace TypeDeclaration.solveMethod
+     *
+     * @param typeDeclaration
+     * @param name
+     * @param argumentsTypes
+     * @param staticOnly
+     * @return
+     */
+    @Deprecated
+    public static SymbolReference<MethodDeclaration> solveMethodInType(
+            TypeDeclaration typeDeclaration, String name, List<Type> argumentsTypes, boolean staticOnly,
+            TypeSolver typeSolver) {
+        if (typeDeclaration instanceof JavaParserClassDeclaration) {
+            Context ctx = ((JavaParserClassDeclaration) typeDeclaration).getContext();
+            return ctx.solveMethod(name, argumentsTypes, staticOnly, typeSolver);
+        }
+        if (typeDeclaration instanceof JavaParserInterfaceDeclaration) {
+            Context ctx = ((JavaParserInterfaceDeclaration) typeDeclaration).getContext();
+            return ctx.solveMethod(name, argumentsTypes, staticOnly, typeSolver);
+        }
+        if (typeDeclaration instanceof JavaParserEnumDeclaration) {
+            if (name.equals("values") && argumentsTypes.isEmpty()) {
+                return SymbolReference.solved(new JavaParserEnumDeclaration.ValuesMethod((JavaParserEnumDeclaration) typeDeclaration, typeSolver));
+            }
+            Context ctx = ((JavaParserEnumDeclaration) typeDeclaration).getContext();
+            return ctx.solveMethod(name, argumentsTypes, staticOnly, typeSolver);
+        }
+        if (typeDeclaration instanceof JavaParserAnonymousClassDeclaration) {
+        	Context ctx = ((JavaParserAnonymousClassDeclaration) typeDeclaration).getContext();
+            return ctx.solveMethod(name, argumentsTypes, staticOnly, typeSolver);
+        }
+        if (typeDeclaration instanceof ReflectionClassDeclaration) {
+            return ((ReflectionClassDeclaration) typeDeclaration).solveMethod(name, argumentsTypes, staticOnly);
+        }
+        if (typeDeclaration instanceof ReflectionInterfaceDeclaration) {
+          return ((ReflectionInterfaceDeclaration) typeDeclaration).solveMethod(name, argumentsTypes, staticOnly);
+        }
+          if (typeDeclaration instanceof ReflectionEnumDeclaration) {
+            return ((ReflectionEnumDeclaration) typeDeclaration).solveMethod(name, argumentsTypes, staticOnly);
+        }
+        if (typeDeclaration instanceof JavassistInterfaceDeclaration) {
+            return ((JavassistInterfaceDeclaration) typeDeclaration).solveMethod(name, argumentsTypes, staticOnly);
+        }
+        if (typeDeclaration instanceof JavassistClassDeclaration) {
+          return ((JavassistClassDeclaration) typeDeclaration).solveMethod(name, argumentsTypes, staticOnly);
+        }
+          if (typeDeclaration instanceof JavassistEnumDeclaration) {
+            return ((JavassistEnumDeclaration) typeDeclaration).solveMethod(name, argumentsTypes, staticOnly);
+        }
+        throw new UnsupportedOperationException(typeDeclaration.getClass().getCanonicalName());
+    }
+
+    ///
+    /// Package-protected methods
+    ///
+
+    @Deprecated
+    static boolean isApplicable(MethodUsage method, String name, List<Type> argumentsTypes,
+                                TypeSolver typeSolver) {
         if (!method.getName().equals(name)) {
             return false;
         }
@@ -129,262 +396,12 @@ public class MethodResolutionLogic {
         return true;
     }
 
-
-    public static Type replaceTypeParam(Type type, TypeParameterDeclaration tp, TypeSolver typeSolver) {
-        if (type.isTypeVariable()) {
-            if (type.describe().equals(tp.getName())) {
-                List<TypeParameterDeclaration.Bound> bounds = tp.getBounds(typeSolver);
-                if (bounds.size() > 1) {
-                    throw new UnsupportedOperationException();
-                } else if (bounds.size() == 1) {
-                    return bounds.get(0).getType();
-                } else {
-                    return new ReferenceTypeImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver);
-                }
-            }
-            return type;
-        } else if (type.isPrimitive()) {
-            return type;
-        } else if (type.isArray()) {
-            return new ArrayType(replaceTypeParam(type.asArrayType().getComponentType(), tp, typeSolver));
-        } else if (type.isReferenceType()) {
-            ReferenceType result = type.asReferenceType();
-            result = result.transformTypeParameters(typeParam -> replaceTypeParam(typeParam, tp, typeSolver)).asReferenceType();
-            return result;
-        } else if (type.isWildcard()) {
-            if (type.describe().equals(tp.getName())) {
-                List<TypeParameterDeclaration.Bound> bounds = tp.getBounds(typeSolver);
-                if (bounds.size() > 1) {
-                    throw new UnsupportedOperationException();
-                } else if (bounds.size() == 1) {
-                    return bounds.get(0).getType();
-                } else {
-                    return new ReferenceTypeImpl(typeSolver.solveType(Object.class.getCanonicalName()), typeSolver);
-                }
-            }
-            return type;
-        } else {
-            throw new UnsupportedOperationException("Replacing " + type + ", param " + tp + " with " + type.getClass().getCanonicalName());
-        }
+    static boolean isApplicableUsingTypeInference(MethodDeclaration method, MethodCallExpr methodCallExpr,
+                                                  TypeSolver typeSolver) {
+        TypeInference typeInference = new TypeInference(typeSolver);
+        return typeInference.invocationApplicabilityInference(methodCallExpr, method);
     }
 
-    /**
-     * @param methods        we expect the methods to be ordered such that inherited methods are later in the list
-     * @param name
-     * @param argumentsTypes
-     * @param typeSolver
-     * @return
-     */
-    @Deprecated
-    public static SymbolReference<MethodDeclaration> findMostApplicable(List<MethodDeclaration> methods, String name, List<Type> argumentsTypes, TypeSolver typeSolver) {
-        SymbolReference<MethodDeclaration> res = findMostApplicable(methods, name, argumentsTypes, typeSolver, false);
-        if (res.isSolved()) {
-            return res;
-        }
-        return findMostApplicable(methods, name, argumentsTypes, typeSolver, true);
-    }
-
-    @Deprecated
-    public static SymbolReference<MethodDeclaration> findMostApplicable(List<MethodDeclaration> methods, String name, List<Type> argumentsTypes, TypeSolver typeSolver, boolean wildcardTolerance) {
-        List<MethodDeclaration> applicableMethods = getMethodsWithoutDuplicates(methods).stream().filter((m) -> isApplicable(m, name, argumentsTypes, typeSolver, wildcardTolerance)).collect(Collectors.toList());
-        if (applicableMethods.isEmpty()) {
-            return SymbolReference.unsolved(MethodDeclaration.class);
-        }
-
-        if (applicableMethods.size() > 1) {
-          List<Integer> nullParamIndexes = new ArrayList<>();
-          for (int i = 0; i < argumentsTypes.size(); i++) {
-            if (argumentsTypes.get(i).isNull()) {
-              nullParamIndexes.add(i);
-            }
-          }
-          if (!nullParamIndexes.isEmpty()) {
-            // remove method with array param if a non array exists and arg is null
-            Set<MethodDeclaration> removeCandidates = new HashSet<>();
-            for (Integer nullParamIndex: nullParamIndexes) {
-              for (MethodDeclaration methDecl: applicableMethods) {
-                if (methDecl.getParam(nullParamIndex.intValue()).getType().isArray()) {
-                  removeCandidates.add(methDecl);
-                }
-              }
-            }
-            if (!removeCandidates.isEmpty() && removeCandidates.size() < applicableMethods.size()) {
-              applicableMethods.removeAll(removeCandidates);
-            }
-          }
-        }
-        if (applicableMethods.size() == 1) {
-            return SymbolReference.solved(applicableMethods.get(0));
-        } else {
-            MethodDeclaration winningCandidate = applicableMethods.get(0);
-            MethodDeclaration other = null;
-            boolean possibleAmbiguity = false;
-            for (int i = 1; i < applicableMethods.size(); i++) {
-                other = applicableMethods.get(i);
-                if (isMoreSpecific(winningCandidate, other, argumentsTypes, typeSolver)) {
-                    possibleAmbiguity = false;
-                } else if (isMoreSpecific(other, winningCandidate, argumentsTypes, typeSolver)) {
-                    possibleAmbiguity = false;
-                    winningCandidate = other;
-                } else {
-                    if (winningCandidate.declaringType().getQualifiedName().equals(other.declaringType().getQualifiedName())) {
-                        possibleAmbiguity = true;
-                    } else {
-                        // we expect the methods to be ordered such that inherited methods are later in the list
-                    }
-                }
-            }
-            if (possibleAmbiguity) {
-              // pick the first exact match if it exists
-              if (!isExactMatch(winningCandidate, argumentsTypes)) {
-                if (isExactMatch(other, argumentsTypes)) {
-                  winningCandidate = other;
-                } else {
-                  throw new MethodAmbiguityException("Ambiguous method call: cannot find a most applicable method: " + winningCandidate + ", " + other);
-                }
-              }
-            }
-            return SymbolReference.solved(winningCandidate);
-        }
-    }
-
-
-    public static Optional<MethodUsage> findMostApplicableUsageUsingTypeInference(List<MethodUsage> methods, MethodCallExpr methodCall, TypeSolver typeSolver) {
-        List<MethodUsage> applicableMethods = methods.stream().filter((m) -> isApplicableUsingTypeInference(m.getDeclaration(), methodCall, typeSolver)).collect(Collectors.toList());
-
-        if (applicableMethods.isEmpty()) {
-            return Optional.empty();
-        }
-        if (applicableMethods.size() == 1) {
-            return Optional.of(applicableMethods.get(0));
-        } else {
-            MethodUsage winningCandidate = applicableMethods.get(0);
-            for (int i = 1; i < applicableMethods.size(); i++) {
-                MethodUsage other = applicableMethods.get(i);
-                if (isMoreSpecific(winningCandidate, other, typeSolver)) {
-                    // nothing to do
-                } else if (isMoreSpecific(other, winningCandidate, typeSolver)) {
-                    winningCandidate = other;
-                } else {
-                    if (winningCandidate.declaringType().getQualifiedName().equals(other.declaringType().getQualifiedName())) {
-                        if (!areOverride(winningCandidate, other)) {
-                            throw new MethodAmbiguityException("Ambiguous method call: cannot find a most applicable method: " + winningCandidate + ", " + other + ". First declared in " + winningCandidate.declaringType().getQualifiedName());
-                        }
-                    } else {
-                        // we expect the methods to be ordered such that inherited methods are later in the list
-                        //throw new UnsupportedOperationException();
-                    }
-                }
-            }
-            return Optional.of(winningCandidate);
-        }
-    }
-
-    @Deprecated
-    public static Optional<MethodUsage> findMostApplicableUsage(List<MethodUsage> methods, String name, List<Type> argumentsTypes, TypeSolver typeSolver) {
-        List<MethodUsage> applicableMethods = methods.stream().filter((m) -> isApplicable(m, name, argumentsTypes, typeSolver)).collect(Collectors.toList());
-
-        if (applicableMethods.isEmpty()) {
-            return Optional.empty();
-        }
-        if (applicableMethods.size() == 1) {
-            return Optional.of(applicableMethods.get(0));
-        } else {
-            MethodUsage winningCandidate = applicableMethods.get(0);
-            for (int i = 1; i < applicableMethods.size(); i++) {
-                MethodUsage other = applicableMethods.get(i);
-                if (isMoreSpecific(winningCandidate, other, typeSolver)) {
-                    // nothing to do
-                } else if (isMoreSpecific(other, winningCandidate, typeSolver)) {
-                    winningCandidate = other;
-                } else {
-                    if (winningCandidate.declaringType().getQualifiedName().equals(other.declaringType().getQualifiedName())) {
-                        if (!areOverride(winningCandidate, other)) {
-                            throw new MethodAmbiguityException("Ambiguous method call: cannot find a most applicable method: " + winningCandidate + ", " + other + ". First declared in " + winningCandidate.declaringType().getQualifiedName());
-                        }
-                    } else {
-                        // we expect the methods to be ordered such that inherited methods are later in the list
-                        //throw new UnsupportedOperationException();
-                    }
-                }
-            }
-            return Optional.of(winningCandidate);
-        }
-    }
-
-    @Deprecated
-    public static SymbolReference<MethodDeclaration> solveMethodInType(TypeDeclaration typeDeclaration, String name, List<Type> argumentsTypes, TypeSolver typeSolver) {
-        return solveMethodInType(typeDeclaration, name, argumentsTypes, false, typeSolver);
-    }
-
-    public static SymbolReference<MethodDeclaration> solveMethodInTypeUsingTypeInference(TypeDeclaration typeDeclaration, MethodCallExpr call, TypeSolver typeSolver) {
-        return solveMethodInTypeUsingTypeInference(typeDeclaration, call, false, typeSolver);
-    }
-
-    public static SymbolReference<MethodDeclaration> solveMethodInTypeUsingTypeInference(TypeDeclaration typeDeclaration,
-                                                                                         MethodCallExpr call, boolean staticOnly,
-                                                                                         TypeSolver typeSolver) {
-        // TODO not sure it needs to be changed
-        List<Type> argumentsTypes = call.getArguments().stream().map(a -> JavaParserFacade.get(typeSolver).getType(a)).collect(Collectors.toList());
-        return solveMethodInType(typeDeclaration, call.getNameAsString(), argumentsTypes, staticOnly, typeSolver);
-    }
-
-    /**
-     * Replace TypeDeclaration.solveMethod
-     *
-     * @param typeDeclaration
-     * @param name
-     * @param argumentsTypes
-     * @param staticOnly
-     * @return
-     */
-    @Deprecated
-    public static SymbolReference<MethodDeclaration> solveMethodInType(TypeDeclaration typeDeclaration,
-                                                                       String name, List<Type> argumentsTypes, boolean staticOnly,
-                                                                       TypeSolver typeSolver) {
-        if (typeDeclaration instanceof JavaParserClassDeclaration) {
-            Context ctx = ((JavaParserClassDeclaration) typeDeclaration).getContext();
-            return ctx.solveMethod(name, argumentsTypes, staticOnly, typeSolver);
-        }
-        if (typeDeclaration instanceof JavaParserInterfaceDeclaration) {
-            Context ctx = ((JavaParserInterfaceDeclaration) typeDeclaration).getContext();
-            return ctx.solveMethod(name, argumentsTypes, staticOnly, typeSolver);
-        }
-        if (typeDeclaration instanceof JavaParserEnumDeclaration) {
-            if (name.equals("values") && argumentsTypes.isEmpty()) {
-                return SymbolReference.solved(new JavaParserEnumDeclaration.ValuesMethod((JavaParserEnumDeclaration) typeDeclaration, typeSolver));
-            }
-            Context ctx = ((JavaParserEnumDeclaration) typeDeclaration).getContext();
-            return ctx.solveMethod(name, argumentsTypes, staticOnly, typeSolver);
-        }
-        if (typeDeclaration instanceof JavaParserAnonymousClassDeclaration) {
-        	Context ctx = ((JavaParserAnonymousClassDeclaration) typeDeclaration).getContext();
-            return ctx.solveMethod(name, argumentsTypes, staticOnly, typeSolver);
-        }
-        if (typeDeclaration instanceof ReflectionClassDeclaration) {
-            return ((ReflectionClassDeclaration) typeDeclaration).solveMethod(name, argumentsTypes, staticOnly);
-        }
-        if (typeDeclaration instanceof ReflectionInterfaceDeclaration) {
-          return ((ReflectionInterfaceDeclaration) typeDeclaration).solveMethod(name, argumentsTypes, staticOnly);
-        }
-          if (typeDeclaration instanceof ReflectionEnumDeclaration) {
-            return ((ReflectionEnumDeclaration) typeDeclaration).solveMethod(name, argumentsTypes, staticOnly);
-        }
-        if (typeDeclaration instanceof JavassistInterfaceDeclaration) {
-            return ((JavassistInterfaceDeclaration) typeDeclaration).solveMethod(name, argumentsTypes, staticOnly);
-        }
-        if (typeDeclaration instanceof JavassistClassDeclaration) {
-          return ((JavassistClassDeclaration) typeDeclaration).solveMethod(name, argumentsTypes, staticOnly);
-        }
-          if (typeDeclaration instanceof JavassistEnumDeclaration) {
-            return ((JavassistEnumDeclaration) typeDeclaration).solveMethod(name, argumentsTypes, staticOnly);
-        }
-        throw new UnsupportedOperationException(typeDeclaration.getClass().getCanonicalName());
-    }
-
-    ///
-    /// Package-protected methods
-    ///
 
     static boolean isAssignableMatchTypeParameters(ReferenceType expected, ReferenceType actual,
                                                    Map<String, Type> matchedParameters) {
@@ -414,7 +431,8 @@ public class MethodResolutionLogic {
     /// Private methods
     ///
 
-    private static List<Type> groupVariadicParamValues(List<Type> argumentsTypes, int startVariadic, Type variadicType) {
+    private static List<Type> groupVariadicParamValues(List<Type> argumentsTypes, int startVariadic,
+                                                       Type variadicType) {
         List<Type> res = new ArrayList<>(argumentsTypes.subList(0, startVariadic));
         List<Type> variadicValues = argumentsTypes.subList(startVariadic, argumentsTypes.size());
         if (variadicValues.isEmpty()) {
@@ -436,7 +454,8 @@ public class MethodResolutionLogic {
     }
 
     @Deprecated
-    private static boolean isApplicable(MethodDeclaration method, String name, List<Type> argumentsTypes, TypeSolver typeSolver, boolean withWildcardTolerance) {
+    private static boolean isApplicable(MethodDeclaration method, String name, List<Type> argumentsTypes,
+                                        TypeSolver typeSolver, boolean withWildcardTolerance) {
         if (!method.getName().equals(name)) {
             return false;
         }
@@ -605,7 +624,8 @@ public class MethodResolutionLogic {
         return res;
     }
 
-    private static boolean isMoreSpecific(MethodDeclaration methodA, MethodDeclaration methodB, List<Type> argumentTypes, TypeSolver typeSolver) {
+    private static boolean isMoreSpecific(MethodDeclaration methodA, MethodDeclaration methodB,
+                                          List<Type> argumentTypes, TypeSolver typeSolver) {
         boolean oneMoreSpecificFound = false;
         if (methodA.getNumberOfParams() < methodB.getNumberOfParams()) {
             return true;
