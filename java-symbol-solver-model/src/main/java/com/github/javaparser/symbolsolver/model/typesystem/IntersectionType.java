@@ -35,7 +35,7 @@ public class IntersectionType implements Type {
 
     @Override
     public String describe() {
-        return String.join(" & ", elements.stream().map(e -> e.describe()).collect(Collectors.toList()));
+        return String.join(" & ", elements.stream().map(Type::describe).collect(Collectors.toList()));
     }
 
     @Override
