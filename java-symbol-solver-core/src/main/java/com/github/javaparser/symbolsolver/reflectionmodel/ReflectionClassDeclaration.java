@@ -195,7 +195,7 @@ public class ReflectionClassDeclaration extends AbstractClassDeclaration {
                 methods.add(ref.get());
             }
         }
-        Optional<MethodUsage> ref = MethodResolutionLogic.findMostApplicableUsageUsingTypeInference(methods, methodCall, typeSolver);
+        Optional<MethodUsage> ref = MethodResolutionLogic.findMostApplicableUsage(methods, methodCall, typeSolver);
         return ref;
     }
 

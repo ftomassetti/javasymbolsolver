@@ -85,7 +85,7 @@ public class MethodCallExprContext extends AbstractJavaParserContext<MethodCallE
                 String className = ((NameExpr) scope).getName().getId();
                 SymbolReference<TypeDeclaration> ref = solveType(className, typeSolver);
                 if (ref.isSolved()) {
-                    SymbolReference<MethodDeclaration> m = MethodResolutionLogic.solveMethodInTypeUsingTypeInference(ref.getCorrespondingDeclaration(), call, typeSolver);
+                    SymbolReference<MethodDeclaration> m = MethodResolutionLogic.solveMethodInType(ref.getCorrespondingDeclaration(), call, typeSolver);
                     if (m.isSolved()) {
                         return Optional.of(TypeInference.toMethodUsage(call, m.getCorrespondingDeclaration(), typeSolver));
                     } else {
@@ -126,6 +126,7 @@ public class MethodCallExprContext extends AbstractJavaParserContext<MethodCallE
     }
 
     @Override
+    @Deprecated
     public Optional<MethodUsage> solveMethodAsUsage(String name, List<Type> argumentsTypes, TypeSolver typeSolver) {
         if (wrappedNode.getScope().isPresent()) {
             Expression scope = wrappedNode.getScope().get();
@@ -203,6 +204,7 @@ public class MethodCallExprContext extends AbstractJavaParserContext<MethodCallE
     }
 
     @Override
+    @Deprecated
     public SymbolReference<MethodDeclaration> solveMethod(String name, List<Type> argumentsTypes, boolean staticOnly, TypeSolver typeSolver) {
         if (wrappedNode.getScope().isPresent()) {
             Expression scope = wrappedNode.getScope().get();

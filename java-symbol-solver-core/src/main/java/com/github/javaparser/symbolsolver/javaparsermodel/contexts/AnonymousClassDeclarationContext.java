@@ -40,6 +40,7 @@ public class AnonymousClassDeclarationContext extends AbstractJavaParserContext<
   }
 
   @Override
+  @Deprecated
   public SymbolReference<MethodDeclaration> solveMethod(String name,
                                                         List<Type> argumentsTypes,
                                                         boolean staticOnly,
@@ -111,7 +112,7 @@ public class AnonymousClassDeclarationContext extends AbstractJavaParserContext<
     if (!Object.class.getCanonicalName().equals(myDeclaration.getQualifiedName())) {
       for (ReferenceType ancestor : myDeclaration.getAncestors()) {
         SymbolReference<MethodDeclaration> res =
-                MethodResolutionLogic.solveMethodInTypeUsingTypeInference(ancestor.getTypeDeclaration(),
+                MethodResolutionLogic.solveMethodInType(ancestor.getTypeDeclaration(),
                         methodCall,
                         staticOnly,
                         typeSolver);
@@ -137,7 +138,7 @@ public class AnonymousClassDeclarationContext extends AbstractJavaParserContext<
     // if is interface and candidate method list is empty, we should check the Object Methods
     if (candidateMethods.isEmpty() && myDeclaration.getSuperTypeDeclaration().isInterface()) {
       SymbolReference<MethodDeclaration> res =
-              MethodResolutionLogic.solveMethodInTypeUsingTypeInference(new ReflectionClassDeclaration(Object.class,
+              MethodResolutionLogic.solveMethodInType(new ReflectionClassDeclaration(Object.class,
                               typeSolver),
                       methodCall,
                       false,
@@ -147,7 +148,7 @@ public class AnonymousClassDeclarationContext extends AbstractJavaParserContext<
       }
     }
 
-    return MethodResolutionLogic.findMostApplicableUsingTypeInference(candidateMethods,
+    return MethodResolutionLogic.findMostApplicable(candidateMethods,
             methodCall,
             typeSolver);
   }
