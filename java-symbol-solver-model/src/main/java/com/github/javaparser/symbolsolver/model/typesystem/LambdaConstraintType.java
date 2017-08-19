@@ -1,9 +1,9 @@
 package com.github.javaparser.symbolsolver.model.typesystem;
 
 public class LambdaConstraintType  implements Type {
-    Type bound;
+    private Type bound;
 
-    public LambdaConstraintType(Type bound) {
+    private LambdaConstraintType(Type bound) {
         this.bound = bound;
     }
 
