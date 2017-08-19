@@ -61,11 +61,11 @@ public class ContextHelper {
         } else if (typeDeclaration instanceof ReflectionEnumDeclaration) {
             // return ((ReflectionEnumDeclaration) typeDeclaration).solveMethodAsUsage(name, argumentsTypes, typeSolver, invokationContext, typeParameters);
         } else if (typeDeclaration instanceof JavaParserClassDeclaration) {
-            return ((JavaParserClassDeclaration) typeDeclaration).getContext().solveMethodAsUsageUsingTypeInference(methodCall, typeSolver);
+            return ((JavaParserClassDeclaration) typeDeclaration).getContext().solveMethodAsUsage(methodCall, typeSolver);
         } else if (typeDeclaration instanceof JavaParserInterfaceDeclaration) {
             // return ((JavaParserInterfaceDeclaration) typeDeclaration).getContext().solveMethodAsUsage(name, argumentsTypes, typeSolver);
         } else if (typeDeclaration instanceof JavaParserEnumDeclaration) {
-            return ((JavaParserEnumDeclaration) typeDeclaration).getContext().solveMethodAsUsageUsingTypeInference(methodCall, typeSolver);
+            return ((JavaParserEnumDeclaration) typeDeclaration).getContext().solveMethodAsUsage(methodCall, typeSolver);
         }
         throw new UnsupportedOperationException(typeDeclaration.toString());
     }

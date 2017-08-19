@@ -109,10 +109,8 @@ public interface Context {
         }
     }
 
-    default Optional<MethodUsage> solveMethodAsUsageUsingTypeInference(MethodCallExpr call, TypeSolver typeSolver) {
-        String name = call.getNameAsString();
-        List<Type> argumentsTypes = call.getArguments().stream().map(a -> JavaParserFacade.get(typeSolver).getType(a)).collect(Collectors.toList());
-        SymbolReference<MethodDeclaration> methodSolved = solveMethod(name, argumentsTypes, false, typeSolver);
+    default Optional<MethodUsage> solveMethodAsUsage(MethodCallExpr call, TypeSolver typeSolver) {
+        SymbolReference<MethodDeclaration> methodSolved = solveMethod(call, false, typeSolver);
         if (methodSolved.isSolved()) {
             MethodDeclaration methodDeclaration = methodSolved.getCorrespondingDeclaration();
             return Optional.of(TypeInference.toMethodUsage(call, methodDeclaration, typeSolver));
