@@ -23,6 +23,8 @@ import static com.github.javaparser.symbolsolver.resolution.typeinference.Expres
 
 /**
  * The API exposed by the TypeInference subsystem.
+ *
+ * @author Federico Tomassetti
  */
 public class TypeInference {
 

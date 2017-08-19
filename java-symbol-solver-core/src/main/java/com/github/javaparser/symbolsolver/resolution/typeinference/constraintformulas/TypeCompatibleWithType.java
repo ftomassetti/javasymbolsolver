@@ -13,6 +13,8 @@ import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHe
 
 /**
  * A type S is compatible in a loose invocation context with type T
+ *
+ * @author Federico Tomassetti
  */
 public class TypeCompatibleWithType extends ConstraintFormula {
     private Type s;

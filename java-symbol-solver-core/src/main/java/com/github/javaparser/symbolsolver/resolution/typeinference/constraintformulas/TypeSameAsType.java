@@ -12,6 +12,8 @@ import static com.github.javaparser.symbolsolver.resolution.typeinference.TypeHe
 
 /**
  * A type S is the same as a type T (§4.3.4), or a type argument S is the same as type argument T
+ *
+ * @author Federico Tomassetti
  */
 public class TypeSameAsType extends ConstraintFormula {
     private Type S;

@@ -2,6 +2,9 @@ package com.github.javaparser.symbolsolver.resolution.typeinference;
 
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 
+/**
+ * @author Federico Tomassetti
+ */
 public class Instantiation {
     private InferenceVariable inferenceVariable;
     private Type properType;

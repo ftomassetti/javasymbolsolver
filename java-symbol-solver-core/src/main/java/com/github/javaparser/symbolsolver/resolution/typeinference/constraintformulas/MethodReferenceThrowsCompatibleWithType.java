@@ -8,6 +8,8 @@ import com.github.javaparser.symbolsolver.resolution.typeinference.ConstraintFor
 /**
  * The checked exceptions thrown by the referenced method are declared by the throws clause of the function type
  * derived from T.
+ *
+ * @author Federico Tomassetti
  */
 public class MethodReferenceThrowsCompatibleWithType extends ConstraintFormula {
     private MethodReferenceExpr methodReference;

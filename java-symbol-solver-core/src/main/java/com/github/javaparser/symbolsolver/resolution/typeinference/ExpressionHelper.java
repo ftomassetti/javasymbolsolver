@@ -2,6 +2,9 @@ package com.github.javaparser.symbolsolver.resolution.typeinference;
 
 import com.github.javaparser.ast.expr.*;
 
+/**
+ * @author Federico Tomassetti
+ */
 public class ExpressionHelper {
 
     /**

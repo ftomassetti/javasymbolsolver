@@ -5,6 +5,9 @@ import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * @author Federico Tomassetti
+ */
 public class InstantiationSet {
 
     private List<Instantiation> instantiations;
