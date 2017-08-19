@@ -18,7 +18,6 @@ package com.github.javaparser.symbolsolver.model.typesystem;
 
 import com.github.javaparser.symbolsolver.model.declarations.ReferenceTypeDeclaration;
 import com.github.javaparser.symbolsolver.model.declarations.TypeParameterDeclaration;
-import com.github.javaparser.symbolsolver.model.declarations.TypeParameterDeclaration.Bound;
 import com.github.javaparser.symbolsolver.model.methods.MethodUsage;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.model.typesystem.parametrization.TypeParameterValueProvider;
@@ -183,6 +182,7 @@ public abstract class ReferenceType implements Type, TypeParametrized, TypeParam
             if (tp.isTypeVariable() && tp.asTypeVariable().describe().equals(tpToReplace.getName())) {
                 inferredTypes.put(tp.asTypeParameter(), replaced);
             }
+            // FIXME
             if (true) {
                 List<Type> typeParametersCorrected = result.asReferenceType().typeParametersValues();
                 typeParametersCorrected.set(i, transformedTp);
