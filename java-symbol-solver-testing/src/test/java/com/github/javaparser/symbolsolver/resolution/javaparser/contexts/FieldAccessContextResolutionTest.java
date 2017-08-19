@@ -48,4 +48,18 @@ public class FieldAccessContextResolutionTest extends AbstractResolutionTest {
 
         assertEquals(methodUsage.getName(), "getSelf");
     }
+
+    @Test
+    public void solveMethodCallInFieldAccessContextUsingTypeInference() throws ParseException {
+        CompilationUnit cu = parseSample("MethodCalls");
+
+        com.github.javaparser.ast.body.ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "MethodCalls");
+        MethodDeclaration method = Navigator.demandMethod(clazz, "bar2");
+        MethodCallExpr methodCallExpr = Navigator.findMethodCall(method, "getSelf");
+
+        TypeSolver typeSolver = new ReflectionTypeSolver();
+        MethodUsage methodUsage = JavaParserFacade.get(typeSolver).solveMethodAsUsageUsingTypeInference(methodCallExpr);
+
+        assertEquals(methodUsage.getName(), "getSelf");
+    }
 }
