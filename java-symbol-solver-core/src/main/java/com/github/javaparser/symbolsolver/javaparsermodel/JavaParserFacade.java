@@ -278,6 +278,7 @@ public class JavaParserFacade {
     }
 
     public Type getType(Node node, boolean solveLambdas) {
+        System.out.println("DEBUG JavaParserFacade.getType "+node+ " solveLambdas="+solveLambdas);
         if (solveLambdas) {
             if (!cacheWithLambdasSolved.containsKey(node)) {
                 Type res = getTypeConcrete(node, solveLambdas);

@@ -53,6 +53,7 @@ public class ExpressionCompatibleWithType extends ConstraintFormula {
         // to ‹S → T›.
 
         if (isStandaloneExpression(expression)) {
+            System.out.println("STANDALONE EXPRESSION " + expression);
             Type s = JavaParserFacade.get(typeSolver).getType(expression, false);
             return ReductionResult.empty().withConstraint(new TypeCompatibleWithType(typeSolver, s, T));
         }
@@ -118,6 +119,7 @@ public class ExpressionCompatibleWithType extends ConstraintFormula {
                 Pair<Type, Boolean> result = TypeHelper.groundTargetTypeOfLambda(lambdaExpr, T, typeSolver);
                 Type TFirst = result.a;
                 MethodType targetFunctionType = TypeHelper.getFunctionType(TFirst);
+                targetFunctionType = targetFunctionType.replaceTypeVariablesWithInferenceVariables();
                 if (result.b) {
                     throw new UnsupportedOperationException();
                 }
@@ -201,6 +203,12 @@ public class ExpressionCompatibleWithType extends ConstraintFormula {
                         if (lambdaExpr.getBody() instanceof BlockStmt) {
                             throw new UnsupportedOperationException();
                         } else {
+                            // FEDERICO: Added - Start
+                            for (int i=0;i<lambdaExpr.getParameters().size();i++) {
+                                Type paramType = targetFunctionType.getFormalArgumentTypes().get(i);
+                                TypeInferenceCache.record(typeSolver, lambdaExpr, lambdaExpr.getParameter(i).getNameAsString(), paramType);
+                            }
+                            // FEDERICO: Added - End
                             Expression e = ((ExpressionStmt)lambdaExpr.getBody()).getExpression();
                             constraints.add(new ExpressionCompatibleWithType(typeSolver, e, R));
                         }

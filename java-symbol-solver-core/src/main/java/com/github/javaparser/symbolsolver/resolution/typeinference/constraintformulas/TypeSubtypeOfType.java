@@ -66,6 +66,12 @@ public class TypeSubtypeOfType extends ConstraintFormula {
             return ReductionResult.oneBound(new SubtypeOfBound(S, T));
         }
 
+        // FEDERICO - Added start
+        //if (T.isTypeVariable()) {
+        //    return ReductionResult.oneBound(new SubtypeOfBound(S, T));
+        //}
+        // FEDERICO - Added end
+
         // - Otherwise, the constraint is reduced according to the form of T:
         //
         //   - If T is a parameterized class or interface type, or an inner class type of a parameterized class or interface type (directly or indirectly), let A1, ..., An be the type arguments of T. Among the supertypes of S, a corresponding class or interface type is identified, with type arguments B1, ..., Bn. If no such type exists, the constraint reduces to false. Otherwise, the constraint reduces to the following new constraints: for all i (1 ≤ i ≤ n), ‹Bi <= Ai›.

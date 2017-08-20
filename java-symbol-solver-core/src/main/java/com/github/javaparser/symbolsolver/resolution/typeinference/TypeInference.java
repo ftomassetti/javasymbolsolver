@@ -329,6 +329,8 @@ public class TypeInference {
         int k = interfaceDeclaration.getTypeParameters().size();
         List<InferenceVariable> alphas = InferenceVariable.instantiate(interfaceDeclaration.getTypeParameters());
 
+        TypeInferenceCache.recordInferenceVariables(typeSolver, lambdaExpr, alphas);
+
         // If n ≠ k, no valid parameterization exists.
 
         if (n != k) {

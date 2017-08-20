@@ -4,8 +4,12 @@ import com.github.javaparser.symbolsolver.model.declarations.TypeParameterDeclar
 import com.github.javaparser.symbolsolver.model.methods.MethodUsage;
 import com.github.javaparser.symbolsolver.model.typesystem.ReferenceType;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
+import com.github.javaparser.symbolsolver.model.typesystem.TypeVariable;
 
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * an ordered 4-tuple consisting of:
@@ -46,5 +50,26 @@ public class MethodType {
 
     public static MethodType fromMethodUsage(MethodUsage methodUsage) {
         return new MethodType(methodUsage.getDeclaration().getTypeParameters(), methodUsage.getParamTypes(), methodUsage.returnType(), methodUsage.exceptionTypes());
+    }
+
+    public MethodType replaceTypeVariablesWithInferenceVariables() {
+        // Find all type variable
+        Map<TypeVariable, InferenceVariable> correspondences = new HashMap<>();
+        List<Type> newFormalArgumentTypes = new LinkedList<>();
+        for (Type formalArg : formalArgumentTypes) {
+            newFormalArgumentTypes.add(replaceTypeVariablesWithInferenceVariables(formalArg, correspondences));
+        }
+        Type newReturnType = replaceTypeVariablesWithInferenceVariables(returnType, correspondences);
+        return new MethodType(typeParameters, newFormalArgumentTypes, newReturnType, exceptionTypes);
+    }
+
+    private Type replaceTypeVariablesWithInferenceVariables(Type originalType, Map<TypeVariable, InferenceVariable> correspondences) {
+        if (originalType.isTypeVariable()) {
+            if (!correspondences.containsKey(originalType.asTypeVariable())) {
+                correspondences.put(originalType.asTypeVariable(), InferenceVariable.unnamed(originalType.asTypeVariable().asTypeParameter()));
+            }
+            return correspondences.get(originalType.asTypeVariable());
+        }
+        throw new UnsupportedOperationException(originalType.toString());
     }
 }

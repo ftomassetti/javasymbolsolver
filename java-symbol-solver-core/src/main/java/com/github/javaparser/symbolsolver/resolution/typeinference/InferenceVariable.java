@@ -63,7 +63,7 @@ public class InferenceVariable implements Type {
         return inferenceVariables;
     }
 
-    private static InferenceVariable unnamed(TypeParameterDeclaration typeParameterDeclaration) {
+    public static InferenceVariable unnamed(TypeParameterDeclaration typeParameterDeclaration) {
         return new InferenceVariable("__unnamed__" + (unnamedInstantiated++), typeParameterDeclaration);
     }
 

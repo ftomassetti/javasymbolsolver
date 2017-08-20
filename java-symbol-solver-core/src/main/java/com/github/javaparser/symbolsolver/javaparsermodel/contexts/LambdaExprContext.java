@@ -38,6 +38,8 @@ import com.github.javaparser.symbolsolver.model.typesystem.ReferenceTypeImpl;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.reflectionmodel.MyObjectProvider;
 import com.github.javaparser.symbolsolver.resolution.SymbolDeclarator;
+import com.github.javaparser.symbolsolver.resolution.typeinference.TypeInference;
+import com.github.javaparser.symbolsolver.resolution.typeinference.TypeInferenceCache;
 import javaslang.Tuple2;
 
 import java.util.*;
@@ -60,6 +62,12 @@ public class LambdaExprContext extends AbstractJavaParserContext<LambdaExpr> {
             int index = 0;
             for (ValueDeclaration decl : sb.getSymbolDeclarations()) {
                 if (decl.getName().equals(name)) {
+
+                    Optional<Type> cachedType = TypeInferenceCache.retrieve(typeSolver, wrappedNode, name);
+                    if (cachedType.isPresent()) {
+                        return Optional.of(new Value(cachedType.get(), name));
+                    }
+
                     if (getParentNode(wrappedNode) instanceof MethodCallExpr) {
                         MethodCallExpr methodCallExpr = (MethodCallExpr) getParentNode(wrappedNode);
                         MethodUsage methodUsage = JavaParserFacade.get(typeSolver).solveMethodAsUsage(methodCallExpr);
