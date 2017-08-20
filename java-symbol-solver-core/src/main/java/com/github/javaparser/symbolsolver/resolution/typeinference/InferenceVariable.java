@@ -29,7 +29,7 @@ public class InferenceVariable implements Type {
 
     @Override
     public String describe() {
-        throw new UnsupportedOperationException();
+        return name;
     }
 
     @Override

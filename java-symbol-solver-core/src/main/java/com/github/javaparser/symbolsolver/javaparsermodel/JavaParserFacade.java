@@ -250,6 +250,7 @@ public class JavaParserFacade {
      * Given a method call find out to which method declaration it corresponds.
      */
     public SymbolReference<MethodDeclaration> solve(MethodCallExpr methodCallExpr, boolean solveLambdas) {
+        System.out.println("DEBUG JavaParserFacade.solve call="+methodCallExpr);
         List<Type> argumentTypes = new LinkedList<>();
         List<LambdaArgumentTypePlaceholder> placeholders = new LinkedList<>();
 
@@ -296,8 +297,8 @@ public class JavaParserFacade {
                     }
                 }
                 if (secondPassNecessary) {
-                    cacheWithLambdasSolved.remove(node);
-                    cacheWithLambdasSolved.put(node, getType(node, true));
+                    //cacheWithLambdasSolved.remove(node);
+                    //cacheWithLambdasSolved.put(node, getType(node, true));
                 }
                 logger.finer("getType on " + node + " -> " + res);
             }

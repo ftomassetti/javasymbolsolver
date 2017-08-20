@@ -177,4 +177,9 @@ public class Wildcard implements Type {
         SUPER,
         EXTENDS
     }
+
+    @Override
+    public boolean mention(List<TypeParameterDeclaration> typeParameters) {
+        return boundedType != null && boundedType.mention(typeParameters);
+    }
 }

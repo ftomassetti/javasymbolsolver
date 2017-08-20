@@ -54,14 +54,14 @@ public class MethodDeclarationCommonLogic {
         // We now look at the type parameter for the method which we can derive from the parameter types
         // and then we replace them in the return type
         // Map<TypeParameterDeclaration, Type> determinedTypeParameters = new HashMap<>();
-        InferenceContext inferenceContext = new InferenceContext(MyObjectProvider.INSTANCE);
-        for (int i = 0; i < methodDeclaration.getNumberOfParams() - (methodDeclaration.hasVariadicParameter() ? 1 : 0); i++) {
-            Type formalParamType = methodDeclaration.getParam(i).getType();
-            Type actualParamType = parameterTypes.get(i);
-            inferenceContext.addPair(formalParamType, actualParamType);
-        }
+//        InferenceContext inferenceContext = new InferenceContext(MyObjectProvider.INSTANCE);
+//        for (int i = 0; i < methodDeclaration.getNumberOfParams() - (methodDeclaration.hasVariadicParameter() ? 1 : 0); i++) {
+//            Type formalParamType = methodDeclaration.getParam(i).getType();
+//            Type actualParamType = parameterTypes.get(i);
+//            inferenceContext.addPair(formalParamType, actualParamType);
+//        }
 
-        returnType = inferenceContext.resolve(inferenceContext.addSingle(returnType));
+        //returnType = inferenceContext.resolve(inferenceContext.addSingle(returnType));
 
         return new MethodUsage(methodDeclaration, params, returnType);
     }

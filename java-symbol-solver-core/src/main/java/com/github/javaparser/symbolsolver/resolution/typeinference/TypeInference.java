@@ -361,7 +361,13 @@ public class TypeInference {
         throw new UnsupportedOperationException();
     }
 
-    public void moreSpecificMethodInference(MethodCallExpr methodCallExpr, MethodDeclaration m1, MethodDeclaration m2) {
+    /**
+     * Return if m2 is more specific than m1
+     * @param methodCallExpr
+     * @param m1
+     * @param m2
+     */
+    public boolean moreSpecificMethodInference(MethodCallExpr methodCallExpr, MethodDeclaration m1, MethodDeclaration m2) {
         // When testing that one applicable method is more specific than another (§15.12.2.5), where the second method
         // is generic, it is necessary to test whether some instantiation of the second method's type parameters can be
         // inferred to make the first method more specific than the second.

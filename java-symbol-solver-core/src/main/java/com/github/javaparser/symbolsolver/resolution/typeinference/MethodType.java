@@ -70,6 +70,9 @@ public class MethodType {
             }
             return correspondences.get(originalType.asTypeVariable());
         }
+        if (originalType.isPrimitive()) {
+            return originalType;
+        }
         throw new UnsupportedOperationException(originalType.toString());
     }
 }

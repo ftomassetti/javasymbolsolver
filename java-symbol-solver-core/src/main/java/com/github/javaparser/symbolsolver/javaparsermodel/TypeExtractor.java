@@ -406,64 +406,65 @@ public class TypeExtractor extends DefaultVisitorAdapter {
                 if (functionalMethod.isPresent()) {
                     LambdaExpr lambdaExpr = node;
 
-                    InferenceContext lambdaCtx = new InferenceContext(MyObjectProvider.INSTANCE);
-                    InferenceContext funcInterfaceCtx = new InferenceContext(MyObjectProvider.INSTANCE);
 
-                    // At this point parameterType
-                    // if Function<T=? super Stream.T, ? extends map.R>
-                    // we should replace Stream.T
-                    Type functionalInterfaceType = ReferenceTypeImpl.undeterminedParameters(functionalMethod.get().getDeclaration().declaringType(), typeSolver);
-
-                    lambdaCtx.addPair(result, functionalInterfaceType);
-
-                    Type actualType;
-
-                    if (lambdaExpr.getBody() instanceof ExpressionStmt) {
-                        actualType = facade.getType(((ExpressionStmt)lambdaExpr.getBody()).getExpression());
-                    } else if (lambdaExpr.getBody() instanceof BlockStmt) {
-                        BlockStmt blockStmt = (BlockStmt) lambdaExpr.getBody();
-                        NodeList<Statement> statements = blockStmt.getStatements();
-
-                        // Get all the return statements in the lambda block
-                        List<ReturnStmt> returnStmts = blockStmt.getNodesByType(ReturnStmt.class);
-
-                        if (returnStmts.size() > 0){
-
-                            actualType = returnStmts.stream()
-                            .map(returnStmt -> {
-                                Optional<Expression> expression = returnStmt.getExpression();
-                                if (expression.isPresent()){
-                                    return facade.getType(expression.get());
-                                } else{
-                                    return VoidType.INSTANCE;
-                                }
-                            })
-                            .filter(x -> x != null && !x.isVoid() && !x.isNull())
-                            .findFirst()
-                            .orElse(VoidType.INSTANCE);
-
-                        } else {
-                            return VoidType.INSTANCE;
-                        }
-
-
-                    } else {
-                        throw new UnsupportedOperationException();
-                    }
-
-                    Type formalType = functionalMethod.get().returnType();
-
-                    // Infer the functional interfaces' return vs actual type
-                    funcInterfaceCtx.addPair(formalType, actualType);
-                    // Substitute to obtain a new type
-                    Type functionalTypeWithReturn = funcInterfaceCtx.resolve(funcInterfaceCtx.addSingle(functionalInterfaceType));
-
-                    // if the functional method returns void anyway
-                    // we don't need to bother inferring types
-                    if (!(formalType instanceof VoidType)){
-                        lambdaCtx.addPair(result, functionalTypeWithReturn);
-                        result = lambdaCtx.resolve(lambdaCtx.addSingle(result));
-                    }
+//                    InferenceContext lambdaCtx = new InferenceContext(MyObjectProvider.INSTANCE);
+//                    InferenceContext funcInterfaceCtx = new InferenceContext(MyObjectProvider.INSTANCE);
+//
+//                    // At this point parameterType
+//                    // if Function<T=? super Stream.T, ? extends map.R>
+//                    // we should replace Stream.T
+//                    Type functionalInterfaceType = ReferenceTypeImpl.undeterminedParameters(functionalMethod.get().getDeclaration().declaringType(), typeSolver);
+//
+//                    lambdaCtx.addPair(result, functionalInterfaceType);
+//
+//                    Type actualType;
+//
+//                    if (lambdaExpr.getBody() instanceof ExpressionStmt) {
+//                        actualType = facade.getType(((ExpressionStmt)lambdaExpr.getBody()).getExpression());
+//                    } else if (lambdaExpr.getBody() instanceof BlockStmt) {
+//                        BlockStmt blockStmt = (BlockStmt) lambdaExpr.getBody();
+//                        NodeList<Statement> statements = blockStmt.getStatements();
+//
+//                        // Get all the return statements in the lambda block
+//                        List<ReturnStmt> returnStmts = blockStmt.getNodesByType(ReturnStmt.class);
+//
+//                        if (returnStmts.size() > 0){
+//
+//                            actualType = returnStmts.stream()
+//                            .map(returnStmt -> {
+//                                Optional<Expression> expression = returnStmt.getExpression();
+//                                if (expression.isPresent()){
+//                                    return facade.getType(expression.get());
+//                                } else{
+//                                    return VoidType.INSTANCE;
+//                                }
+//                            })
+//                            .filter(x -> x != null && !x.isVoid() && !x.isNull())
+//                            .findFirst()
+//                            .orElse(VoidType.INSTANCE);
+//
+//                        } else {
+//                            return VoidType.INSTANCE;
+//                        }
+//
+//
+//                    } else {
+//                        throw new UnsupportedOperationException();
+//                    }
+//
+//                    Type formalType = functionalMethod.get().returnType();
+//
+//                    // Infer the functional interfaces' return vs actual type
+//                    funcInterfaceCtx.addPair(formalType, actualType);
+//                    // Substitute to obtain a new type
+//                    Type functionalTypeWithReturn = funcInterfaceCtx.resolve(funcInterfaceCtx.addSingle(functionalInterfaceType));
+//
+//                    // if the functional method returns void anyway
+//                    // we don't need to bother inferring types
+//                    if (!(formalType instanceof VoidType)){
+//                        lambdaCtx.addPair(result, functionalTypeWithReturn);
+//                        result = lambdaCtx.resolve(lambdaCtx.addSingle(result));
+//                    }
                 }
 
                 return result;

@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
  *
  * @author Federico Tomassetti
  */
+@Deprecated
 public class InferenceVariableType implements Type {
     @Override
     public String toString() {

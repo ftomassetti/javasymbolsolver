@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 /**
  * @author Federico Tomassetti
  */
+@Deprecated
 public class InferenceContext {
 
     private int nextInferenceVariableId = 0;
@@ -180,7 +181,7 @@ public class InferenceContext {
         } else if (type instanceof InferenceVariableType) {
             return type;
         } else {
-            throw new UnsupportedOperationException(type.describe());
+            throw new UnsupportedOperationException(type.describe()+ " "+ type.getClass().getCanonicalName());
         }
     }
 

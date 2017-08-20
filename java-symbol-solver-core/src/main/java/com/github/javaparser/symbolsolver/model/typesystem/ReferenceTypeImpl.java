@@ -152,4 +152,9 @@ public class ReferenceTypeImpl extends ReferenceType {
             return new ReferenceTypeImpl(typeDeclaration, typeSolver);
         }
     }
+
+    @Override
+    public boolean mention(List<TypeParameterDeclaration> typeParameters) {
+        return typeParametersValues().stream().anyMatch(tp -> tp.mention(typeParameters));
+    }
 }
