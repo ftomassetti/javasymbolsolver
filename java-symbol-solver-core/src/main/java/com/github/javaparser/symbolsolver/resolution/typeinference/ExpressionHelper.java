@@ -4,6 +4,7 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.ExpressionStmt;
+import com.github.javaparser.ast.stmt.ReturnStmt;
 import com.github.javaparser.ast.type.UnknownType;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
@@ -98,6 +99,9 @@ public class ExpressionHelper {
                 return false;
             }
             if (parent instanceof MethodCallExpr) {
+                return false;
+            }
+            if (parent instanceof ReturnStmt) {
                 return false;
             }
             throw new UnsupportedOperationException(parent.getClass().getCanonicalName());
