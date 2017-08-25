@@ -82,7 +82,9 @@ public class TypeCompatibleWithType extends ConstraintFormula {
             //throw new UnsupportedOperationException();
         }
 
-        // 5. Otherwise, if T is an array type of the form G<T1, ..., Tn>[]k, and there exists no type of the form G<...>[]k that is a supertype of S, but the raw type G[]k is a supertype of S, then the constraint reduces to true. (The notation []k indicates an array type of k dimensions.)
+        // 5. Otherwise, if T is an array type of the form G<T1, ..., Tn>[]k, and there exists no type of the form
+        //    G<...>[]k that is a supertype of S, but the raw type G[]k is a supertype of S, then the constraint
+        //    reduces to true. (The notation []k indicates an array type of k dimensions.)
 
         if (t.isArray()) {
             throw new UnsupportedOperationException();

@@ -25,7 +25,9 @@ import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.stmt.ReturnStmt;
 import com.github.javaparser.symbolsolver.core.resolution.Context;
 import com.github.javaparser.symbolsolver.javaparser.Navigator;
+import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
 import com.github.javaparser.symbolsolver.javaparsermodel.contexts.LambdaExprContext;
+import com.github.javaparser.symbolsolver.javaparsermodel.contexts.MethodCallExprContext;
 import com.github.javaparser.symbolsolver.model.resolution.TypeSolver;
 import com.github.javaparser.symbolsolver.model.resolution.Value;
 import com.github.javaparser.symbolsolver.resolution.AbstractResolutionTest;
@@ -51,6 +53,36 @@ public class LambdaExprContextResolutionTest extends AbstractResolutionTest {
     @Before
     public void setup() {
         typeSolver = new ReflectionTypeSolver();
+    }
+
+    @Test
+    public void substitutionOfGenericsInScope() throws ParseException {
+        CompilationUnit cu = parseSample("Lambda");
+
+        com.github.javaparser.ast.body.ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "Agenda");
+        MethodDeclaration method = Navigator.demandMethod(clazz, "lambdaMap");
+        ReturnStmt returnStmt = Navigator.findReturnStmt(method);
+        MethodCallExpr methodCallExpr = (MethodCallExpr) returnStmt.getExpression().get();
+        LambdaExpr lambdaExpr = (LambdaExpr) methodCallExpr.getArguments().get(0);
+
+        Context context = new LambdaExprContext(lambdaExpr, typeSolver);
+
+        Optional<Value> ref = context.solveSymbolAsValue("persons", typeSolver);
+        assertTrue(ref.isPresent());
+        assertEquals("java.util.List<java.lang.String>", ref.get().getType().describe());
+    }
+
+    @Test
+    public void substitutionOfGenericsForMethodInScope() throws ParseException {
+        CompilationUnit cu = parseSample("Lambda");
+
+        com.github.javaparser.ast.body.ClassOrInterfaceDeclaration clazz = Navigator.demandClass(cu, "Agenda");
+        MethodDeclaration method = Navigator.demandMethod(clazz, "lambdaMap");
+        ReturnStmt returnStmt = Navigator.findReturnStmt(method);
+        MethodCallExpr methodCallExpr = (MethodCallExpr) returnStmt.getExpression().get();
+        MethodCallExpr callToStream = (MethodCallExpr) methodCallExpr.getScope().get();
+
+        assertEquals("java.util.stream.Stream<java.lang.String>", JavaParserFacade.get(typeSolver).getType(callToStream).describe());
     }
 
     @Test

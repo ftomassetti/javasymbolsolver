@@ -269,6 +269,32 @@ public interface TypeParameterDeclaration extends TypeDeclaration {
         public boolean isSuper() {
             return !isExtends();
         }
+
+        @Override
+        public String toString() {
+            return "Bound{" +
+                    "extendsBound=" + extendsBound +
+                    ", type=" + type +
+                    '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Bound bound = (Bound) o;
+
+            if (extendsBound != bound.extendsBound) return false;
+            return type != null ? type.equals(bound.type) : bound.type == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = (extendsBound ? 1 : 0);
+            result = 31 * result + (type != null ? type.hashCode() : 0);
+            return result;
+        }
     }
 
 }

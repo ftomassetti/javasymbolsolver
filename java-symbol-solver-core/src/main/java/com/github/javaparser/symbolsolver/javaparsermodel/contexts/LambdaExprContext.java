@@ -70,7 +70,7 @@ public class LambdaExprContext extends AbstractJavaParserContext<LambdaExpr> {
 
                     if (getParentNode(wrappedNode) instanceof MethodCallExpr) {
                         MethodCallExpr methodCallExpr = (MethodCallExpr) getParentNode(wrappedNode);
-                        MethodUsage methodUsage = JavaParserFacade.get(typeSolver).solveMethodAsUsage(methodCallExpr);
+                        MethodUsage methodUsage = JavaParserFacade.get(typeSolver).solveMethodAsUsageUsingTypeInference(methodCallExpr);
                         int i = pos(methodCallExpr, wrappedNode);
                         Type lambdaType = methodUsage.getParamTypes().get(i);
 

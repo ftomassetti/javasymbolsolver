@@ -37,6 +37,7 @@ import com.github.javaparser.symbolsolver.model.typesystem.ReferenceType;
 import com.github.javaparser.symbolsolver.model.typesystem.Type;
 import com.github.javaparser.symbolsolver.reflectionmodel.ReflectionClassDeclaration;
 import com.github.javaparser.symbolsolver.resolution.MethodResolutionLogic;
+import com.github.javaparser.symbolsolver.resolution.typeinference.InferenceVariable;
 import com.github.javaparser.symbolsolver.resolution.typeinference.TypeInference;
 import javaslang.Tuple2;
 
@@ -45,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class MethodCallExprContext extends AbstractJavaParserContext<MethodCallExpr> {
 
@@ -98,21 +100,27 @@ public class MethodCallExprContext extends AbstractJavaParserContext<MethodCallE
             Type typeOfScope = JavaParserFacade.get(typeSolver).getType(scope);
             // we can replace the parameter types from the scope into the typeParametersValues
 
-//            Map<TypeParameterDeclaration, Type> inferredTypes = new HashMap<>();
-//            for (int i = 0; i < argumentsTypes.size(); i++) {
-//                // by replacing types I can also find new equivalences
-//                // for example if I replace T=U with String because I know that T=String I can derive that also U equal String
-//                Type originalArgumentType = argumentsTypes.get(i);
-//                Type updatedArgumentType = usingParameterTypesFromScope(typeOfScope, originalArgumentType, inferredTypes);
-//                argumentsTypes.set(i, updatedArgumentType);
-//            }
-//            for (int i = 0; i < argumentsTypes.size(); i++) {
-//                Type updatedArgumentType = applyInferredTypes(argumentsTypes.get(i), inferredTypes);
-//                argumentsTypes.set(i, updatedArgumentType);
-//            }
+            List<Type> argumentsTypes = call.getArguments().stream().map(a -> JavaParserFacade.get(typeSolver).getType(a)).collect(Collectors.toList());
+            Map<TypeParameterDeclaration, Type> inferredTypes = new HashMap<>();
+            for (int i = 0; i < argumentsTypes.size(); i++) {
+                // by replacing types I can also find new equivalences
+                // for example if I replace T=U with String because I know that T=String I can derive that also U equal String
+                Type originalArgumentType = argumentsTypes.get(i);
+                Type updatedArgumentType = usingParameterTypesFromScope(typeOfScope, originalArgumentType, inferredTypes);
+                argumentsTypes.set(i, updatedArgumentType);
+            }
+            for (int i = 0; i < argumentsTypes.size(); i++) {
+                Type updatedArgumentType = applyInferredTypes(argumentsTypes.get(i), inferredTypes);
+                argumentsTypes.set(i, updatedArgumentType);
+            }
 
             if (typeOfScope instanceof LambdaConstraintType) {
                 typeOfScope = ((LambdaConstraintType)typeOfScope).getBound();
+            }
+            if (typeOfScope instanceof InferenceVariable) {
+                InferenceVariable inferenceVariable = (InferenceVariable)typeOfScope;
+                TypeParameterDeclaration typeParameterDeclaration = inferenceVariable.getTypeParameterDeclaration();
+                throw new UnsupportedOperationException(inferenceVariable.getTypeParameterDeclaration().toString() + typeParameterDeclaration.getBounds(typeSolver)+ call.toString());
             }
 
             return solveMethodAsUsageUsingTypeInference(typeOfScope.asReferenceType(), call, typeSolver, this);
