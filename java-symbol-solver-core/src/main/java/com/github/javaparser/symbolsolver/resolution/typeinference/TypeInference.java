@@ -363,15 +363,19 @@ public class TypeInference {
 
     /**
      * Return if m2 is more specific than m1
-     * @param methodCallExpr
+     * @param methodCall
      * @param m1
      * @param m2
      */
-    public boolean moreSpecificMethodInference(MethodCallExpr methodCallExpr, MethodDeclaration m1, MethodDeclaration m2) {
+    public boolean moreSpecificMethodInference(MethodCallExpr methodCall, MethodDeclaration m1, MethodDeclaration m2) {
         // When testing that one applicable method is more specific than another (§15.12.2.5), where the second method
         // is generic, it is necessary to test whether some instantiation of the second method's type parameters can be
         // inferred to make the first method more specific than the second.
-        //
+
+        if (!m2.isGeneric()) {
+            throw new IllegalArgumentException("M2 is not generic (m2: " + m2 + ")");
+        }
+
         // Let m1 be the first method and m2 be the second method. Where m2 has type parameters P1, ..., Pp,
         // let α1, ..., αp be inference variables, and let θ be the substitution [P1:=α1, ..., Pp:=αp].
         //

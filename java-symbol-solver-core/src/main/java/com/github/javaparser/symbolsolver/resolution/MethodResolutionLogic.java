@@ -174,6 +174,46 @@ public class MethodResolutionLogic {
         }
     }
 
+    private static boolean moreSpecific(MethodCallExpr methodCall, MethodDeclaration m1, MethodDeclaration m2,
+                                       TypeSolver typeSolver) {
+        if (m2.isGeneric()) {
+            return new TypeInference(typeSolver).moreSpecificMethodInference(methodCall, m1, m2);
+        } else {
+            return moreSpecificWithoutGeneric(methodCall, m1, m2, typeSolver);
+        }
+    }
+
+    private static boolean moreSpecificWithoutGeneric(MethodCallExpr methodCall, MethodDeclaration m1, MethodDeclaration m2,
+                                                      TypeSolver typeSolver) {
+                List<Type> argumentsTypes = methodCall.getArguments().stream()
+                .map(a -> JavaParserFacade.get(typeSolver).getType(a))
+                .collect(Collectors.toList());
+        List<Integer> nullParamIndexes = new ArrayList<>();
+        for (int i = 0; i < methodCall.getArguments().size(); i++) {
+            if (argumentsTypes.get(i).isNull()) {
+                nullParamIndexes.add(i);
+            }
+        }
+        if (!nullParamIndexes.isEmpty()) {
+            // remove method with array param if a non array exists and arg is null
+            Set<MethodDeclaration> removeCandidates = new HashSet<>();
+            boolean excludeM1 = false;
+            boolean excludeM2 = false;
+            for (Integer nullParamIndex: nullParamIndexes) {
+                excludeM1 = excludeM1 || m1.getParam(nullParamIndex.intValue()).getType().isArray();
+                excludeM2 = excludeM2 || m2.getParam(nullParamIndex.intValue()).getType().isArray();
+            }
+            if (excludeM2 && !excludeM1) {
+                return true;
+            }
+            if (excludeM1 && !excludeM2) {
+                return false;
+            }
+        }
+
+        return isMoreSpecific(m1, m2, argumentsTypes, typeSolver);
+    }
+
     public static SymbolReference<MethodDeclaration> findMostApplicable(List<MethodDeclaration> methods,
                                                                         MethodCallExpr methodCall,
                                                                         TypeSolver typeSolver) {
@@ -190,11 +230,11 @@ public class MethodResolutionLogic {
 
         MethodDeclaration most = applicableMethods.get(0);
         for (int i=1;i<applicableMethods.size();i++) {
-            if (new TypeInference(typeSolver).moreSpecificMethodInference(methodCall, most, applicableMethods.get(i))) {
+            if (moreSpecific(methodCall, most, applicableMethods.get(i), typeSolver)) {
                 most = applicableMethods.get(i);
-            } else if (!new TypeInference(typeSolver).moreSpecificMethodInference(methodCall, applicableMethods.get(i), most)) {
+            } /*else if (!moreSpecific(methodCall, applicableMethods.get(i), most, typeSolver)) {
                 throw new MethodAmbiguityException("Ambiguous method call: cannot find a most applicable method: " + most + ", " + applicableMethods.get(i));
-            }
+            }*/
         }
         return SymbolReference.solved(most);
 
